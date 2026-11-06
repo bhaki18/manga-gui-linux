@@ -100,6 +100,9 @@ else
     if [ -d ./cli/node_modules ]; then
         cp -rf ./cli/node_modules ./publish/linux-x64/cli/
     fi
+    if [ -f ./linux_version.json ]; then
+        cp -f ./linux_version.json ./publish/linux-x64/linux_version.json
+    fi
     if [ -f ./version.json ]; then
         cp -f ./version.json ./publish/linux-x64/version.json
     fi

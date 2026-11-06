@@ -1,37 +1,36 @@
-# 🚀 Guida Developer: Come Rilasciare un Aggiornamento di Manga GUI per Tutti gli Utenti
+# 🚀 Guida Developer: Come Rilasciare un Aggiornamento di Manga GUI Linux per Tutti gli Utenti
 
-Questa guida descrive il funzionamento del sistema di **Auto-Updater** integrato in **Manga GUI** e i passaggi esatti che lo sviluppatore deve eseguire per pubblicare una nuova versione e notificare automaticamente tutti gli utenti che hanno l'applicazione installata.
+Questa guida descrive il funzionamento del sistema di **Auto-Updater** integrato in **Manga GUI Linux** e i passaggi esatti che lo sviluppatore deve eseguire per pubblicare una nuova versione e notificare automaticamente tutti gli utenti che hanno l'applicazione installata.
 
 ---
 
 ## 🧠 1. Come Funziona l'Auto-Updater
 
-All'avvio di **Manga GUI** (oppure cliccando sul pulsante **`🔄 Check Updates`** nella barra di stato in basso a destra), il servizio [`UpdateService`](file:///home/adp/Desktop/manga-gui/Services/UpdateService.cs) esegue i seguenti passaggi:
+All'avvio di **Manga GUI** (oppure cliccando sul pulsante **`🔄 Check Updates`** nella barra di stato in basso a destra), il servizio [`UpdateService`](file:///home/adp/Desktop/manga-gui-linux/Services/UpdateService.cs) esegue i seguenti passaggi:
 
 1. **Lettura della Versione Installata**:
-   - Legge la versione locale da [`version.json`](file:///home/adp/Desktop/manga-gui/version.json) (incluso in `/usr/lib/manga-gui/version.json`, nella cartella dell'eseguibile o nella root del progetto) oppure da [`PKGBUILD`](file:///home/adp/Desktop/manga-gui/PKGBUILD) nel formato `<pkgver>-<pkgrel>` (es. `1.0.0-2`).
+   - Legge la versione locale da [`linux_version.json`](file:///home/adp/Desktop/manga-gui-linux/linux_version.json) (incluso in `/usr/lib/manga-gui/linux_version.json`, nella cartella dell'eseguibile o nella root del progetto) oppure da [`PKGBUILD`](file:///home/adp/Desktop/manga-gui-linux/PKGBUILD) nel formato `<pkgver>-<pkgrel>` (es. `1.1.6-5`).
 2. **Controllo della Versione Pubblicata Online**:
-   - Interroga senza cache il manifesto [`version.json`](file:///home/adp/Desktop/manga-gui/version.json) pubblicato su:
-     - `https://raw.githubusercontent.com/bhaki18/manga-cli/gh-pages/version.json` (branch `gh-pages` pubblicato da `./publish-gh-pages.sh`)
-     - `https://raw.githubusercontent.com/bhaki18/manga-gui/main/version.json` (branch `main` del repository sorgente)
-     - `https://raw.githubusercontent.com/bhaki18/manga-gui/main/PKGBUILD`
+   - Interroga senza cache il manifesto [`linux_version.json`](file:///home/adp/Desktop/manga-gui-linux/linux_version.json) pubblicato su:
+     - `https://raw.githubusercontent.com/bhaki18/manga-gui-linux/main/linux_version.json` (branch `main` del repository Linux)
+     - `https://raw.githubusercontent.com/bhaki18/manga-cli/gh-pages/linux_version.json` (branch `gh-pages` pubblicato da `./publish-gh-pages.sh`)
+     - `https://raw.githubusercontent.com/bhaki18/manga-gui-linux/main/PKGBUILD`
 3. **Regola di Confronto (`IsRemoteNewer`)**:
    - **Se la versione online è uguale (`==`) o inferiore (`<`) a quella installata**: non viene mostrato alcun avviso automatico e l'app non si aggiorna.
-   - **SOLO se la versione online è strettamente più recente (`>`) di quella installata** (es. locale `1.0.0-2` vs online `1.0.0-3` oppure `1.1.0-1`): compare il popup **`🚀 Nuovo Aggiornamento Disponibile!`** con le note di rilascio.
+   - **SOLO se la versione online è strettamente più recente (`>`) di quella installata**: compare il popup **`🚀 Nuovo Aggiornamento Disponibile!`** con le note di rilascio.
 4. **Esecuzione dell'Aggiornamento (`⚡ Aggiorna Ora`)**:
-   - **Step 1 — Dipendenze**: Verifica la presenza di `git`, `curl`, `node`, `npm`, `mpv` e `dotnet` (`dotnet-sdk`) e installa automaticamente eventuali pacchetti mancanti tramite il gestore di pacchetti di sistema (`pacman`, `apt`, `dnf`, `winget`).
-   - **Step 2 — Download**: Scarica l'ultima versione del codice sorgente dal repository ufficiale (`https://github.com/bhaki18/manga-gui.git`).
-   - **Step 3 — Compilazione**: Installa le dipendenze della CLI (`npm install`) e compila la nuova versione di `MangaGui` (`dotnet publish`) e/o genera il pacchetto `.pkg.tar.zst` (con fallback automatico al pacchetto precompilato su `gh-pages`).
-   - **Step 4 — Installazione e Riavvio**: Installa l'aggiornamento e riavvia automaticamente la nuova versione di **Manga GUI**.
+   - **Step 1 — Dipendenze**: Verifica la presenza di `git`, `curl`, `node`, `npm`, `mpv` e `dotnet` (`dotnet-sdk`).
+   - **Step 2 — Download**: Scarica l'ultima versione del codice sorgente dal repository ufficiale (`https://github.com/bhaki18/manga-gui-linux.git`) oppure installa il pacchetto precompilato (`.pkg.tar.zst`).
+   - **Step 3 — Compilazione / Installazione**: Installa l'aggiornamento e riavvia automaticamente la nuova versione di **Manga GUI**.
 
 ---
 
 ## ⚡ 2. Procedura Rapida per Rilasciare un Aggiornamento (Consigliata)
 
-Dopo aver effettuato le tue modifiche al codice di `manga-gui` o `cli/`:
+Dopo aver effettuato le tue modifiche al codice di `manga-gui-linux` o `cli/`:
 
-### Passo 1 — Pubblica il codice aggiornato sul repository sorgente (`manga-gui`)
-Assicurati che il codice sorgente sia committato e pushato sul repository principale `bhaki18/manga-gui`, così quando l'Updater degli utenti scarica e compila il progetto troverà le tue ultime modifiche:
+### Passo 1 — Pubblica il codice aggiornato sul repository sorgente (`manga-gui-linux`)
+Assicurati che il codice sorgente sia committato e pushato sul repository principale `bhaki18/manga-gui-linux`:
 
 ```bash
 git status
@@ -41,7 +40,7 @@ git push origin main
 ```
 
 ### Passo 2 — Incrementa la versione, compila e pubblica su GitHub Pages con un solo comando
-Lo script `./publish-gh-pages.sh` aggiorna automaticamente [`PKGBUILD`](file:///home/adp/Desktop/manga-gui/PKGBUILD) e [`version.json`](file:///home/adp/Desktop/manga-gui/version.json), ricompila i pacchetti e carica sia il `.pkg.tar.zst` sia `version.json` sul branch `gh-pages`:
+Lo script `./publish-gh-pages.sh` aggiorna automaticamente [`PKGBUILD`](file:///home/adp/Desktop/manga-gui-linux/PKGBUILD) e [`linux_version.json`](file:///home/adp/Desktop/manga-gui-linux/linux_version.json), ricompila i pacchetti e carica sia il `.pkg.tar.zst` sia `linux_version.json` sul branch `gh-pages`:
 
 #### Opzione A: Incremento rapido di release (`pkgrel`, es. da `1.0.0-2` a `1.0.0-3`)
 ```bash

@@ -19,7 +19,7 @@ public class UpdateCheckResult
     public string InstalledVersion { get; set; } = "1.0.0-2";
     public string RemoteVersion { get; set; } = "1.0.0-2";
     public string ReleaseNotes { get; set; } = string.Empty;
-    public string RepoUrl { get; set; } = "https://github.com/bhaki18/manga-gui.git";
+    public string RepoUrl { get; set; } = "https://github.com/bhaki18/manga-gui-linux.git";
     public string ArchPackageUrl { get; set; } = string.Empty;
     public string DebPackageUrl { get; set; } = string.Empty;
     public string LinuxTarballUrl { get; set; } = string.Empty;
