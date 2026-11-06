@@ -1,0 +1,24 @@
+# Build and publish outputs
+bin/
+obj/
+publish/
+pkg/
+/src/
+*.pkg.tar.zst
+*.deb
+*.tar.gz
+.deb-build-tmp/
+*.pdb
+*.deb
+
+# IDE and tooling
+*.user
+*.suo
+.vs/
+.idea/
+.vscode/
+*.DotSettings.user
+
+*.syso
+*.zip
+.gh-pages-tmp/

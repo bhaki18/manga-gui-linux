@@ -1,0 +1,42 @@
+[
+  {
+    "id": "animeworld",
+    "name": "AnimeWorld",
+    "type": "anime",
+    "languages": ["it"],
+    "description": "Catalogo anime completo con streaming 1080p diretto (SUB ITA & ITA)",
+    "version": "1.0.0",
+    "file": "animeworld.js",
+    "url": "https://www.animeworld.ac"
+  },
+  {
+    "id": "animesaturn",
+    "name": "AnimeSaturn",
+    "type": "anime",
+    "languages": ["it"],
+    "description": "Catalogo anime italiano con streaming diretto MP4/HLS (SUB ITA & ITA)",
+    "version": "1.0.0",
+    "file": "animesaturn.js",
+    "url": "https://www.animesaturn.net"
+  },
+  {
+    "id": "animeunity",
+    "name": "AnimeUnity",
+    "type": "anime",
+    "languages": ["it"],
+    "description": "Catalogo anime 1080p con player VixCloud / StreamingCommunity CDN (SUB ITA & ITA)",
+    "version": "1.0.0",
+    "file": "animeunity.js",
+    "url": "https://www.animeunity.co"
+  },
+  {
+    "id": "mangaworld",
+    "name": "MangaWorld",
+    "type": "manga",
+    "languages": ["it"],
+    "description": "Catalogo manga e manhwa scan ITA completo",
+    "version": "1.0.0",
+    "file": "mangaworld.js",
+    "url": "https://www.mangaworld.ac"
+  }
+]

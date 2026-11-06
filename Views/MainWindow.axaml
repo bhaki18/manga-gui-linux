@@ -1,0 +1,871 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:MangaGui.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:loader="clr-namespace:AsyncImageLoader;assembly=AsyncImageLoader.Avalonia"
+        mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
+        x:Class="MangaGui.Views.MainWindow"
+        x:DataType="vm:MainViewModel"
+        Icon="/Assets/manga-gui.ico"
+        Title="Manga GUI"
+        Width="1280" Height="800"
+        MinWidth="950" MinHeight="600"
+        WindowStartupLocation="CenterScreen"
+        Background="#000000">
+
+    <Design.DataContext>
+        <vm:MainViewModel />
+    </Design.DataContext>
+
+    <Grid RowDefinitions="Auto,*,Auto">
+        <!-- CRUNCHYROLL TOP NAVIGATION BAR -->
+        <Border Grid.Row="0" Background="#000000" BorderBrush="#1C1C1E" BorderThickness="0,0,0,1" Padding="30,12">
+            <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+                <!-- Crunchyroll Logo & Brand -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center" Cursor="Hand">
+                    <!-- Crunchyroll Orange Eye Icon -->
+                    <Path Data="M 12 2 C 6.48 2 2 6.48 2 12 C 2 17.52 6.48 22 12 22 C 17.52 22 22 17.52 22 12 C 22 6.48 17.52 2 12 2 Z M 12 6 C 15.31 6 18 8.69 18 12 C 18 15.31 15.31 18 12 18 C 8.69 18 6 15.31 6 12 C 6 8.69 8.69 6 12 6 Z"
+                          Fill="#FF640A" Width="26" Height="26" Stretch="Uniform" VerticalAlignment="Center"/>
+                    <TextBlock Text="manga gui" FontWeight="Black" FontSize="22" Foreground="#FF640A" VerticalAlignment="Center" LetterSpacing="-0.5"/>
+                </StackPanel>
+
+                <!-- Navigation Links -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="24" Margin="35,0,0,0" VerticalAlignment="Center">
+                    <Button Content="Anime" 
+                            Command="{Binding SwitchTabCommand}" 
+                            CommandParameter="Anime"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Padding="0"
+                            FontSize="14"
+                            FontWeight="SemiBold"
+                            Foreground="{Binding AnimeTabColor}"
+                            Cursor="Hand" />
+
+                    <Button Content="Manga" 
+                            Command="{Binding SwitchTabCommand}" 
+                            CommandParameter="Manga"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Padding="0"
+                            FontSize="14"
+                            FontWeight="SemiBold"
+                            Foreground="{Binding MangaTabColor}"
+                            Cursor="Hand" />
+
+                    <Button Content="Downloaded" 
+                            Command="{Binding SwitchTabCommand}" 
+                            CommandParameter="Downloaded"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Padding="0"
+                            FontSize="14"
+                            FontWeight="SemiBold"
+                            Foreground="{Binding DownloadedTabColor}"
+                            Cursor="Hand" />
+
+
+
+                    <!-- Source Selector -->
+                    <ComboBox ItemsSource="{Binding Sources}" 
+                              SelectedItem="{Binding SelectedSource}"
+                              CornerRadius="4"
+                              Background="#141519"
+                              BorderBrush="#2B2C30"
+                              Foreground="#FFFFFF"
+                              FontSize="12"
+                              Width="140"
+                              ToolTip.Tip="Filter by source"
+                              VerticalAlignment="Center"/>
+
+                    <!-- Language Selector -->
+                    <ComboBox ItemsSource="{Binding Languages}" 
+                              SelectedItem="{Binding SelectedLanguage}"
+                              CornerRadius="4"
+                              Background="#141519"
+                              BorderBrush="#2B2C30"
+                              Foreground="#FFFFFF"
+                              FontSize="12"
+                              Width="150"
+                              ToolTip.Tip="Filter by language"
+                              VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Right Tools (Search, Premium, Bookmark, User) -->
+                <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="20" VerticalAlignment="Center">
+                    <!-- Search Input Box + Search History Dropdown -->
+                    <Panel VerticalAlignment="Center">
+                        <Border x:Name="SearchBoxBorder" Background="#141519" BorderBrush="#2B2C30" BorderThickness="1" CornerRadius="20" Padding="12,6" Width="240">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBox x:Name="SearchInputBox"
+                                         Grid.Column="0" 
+                                         Text="{Binding SearchQuery}" 
+                                         PlaceholderText="Search anime, manga..." 
+                                         GotFocus="OnSearchBoxGotFocus"
+                                         Tapped="OnSearchBoxTapped"
+                                         Background="Transparent"
+                                         BorderThickness="0"
+                                         Padding="0"
+                                         FontSize="13"
+                                         Foreground="#FFFFFF">
+                                    <TextBox.KeyBindings>
+                                        <KeyBinding Gesture="Enter" Command="{Binding SearchCommand}" />
+                                        <KeyBinding Gesture="Escape" Command="{Binding CloseSearchHistoryCommand}" />
+                                    </TextBox.KeyBindings>
+                                </TextBox>
+                                <Button Grid.Column="1" 
+                                        Command="{Binding SearchCommand}"
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        Padding="4,0"
+                                        Content="🔍" 
+                                        Cursor="Hand" />
+                            </Grid>
+                        </Border>
+
+                        <Popup IsOpen="{Binding IsSearchHistoryOpen, Mode=TwoWay}"
+                               PlacementTarget="{Binding #SearchBoxBorder}"
+                               Placement="BottomEdgeAlignedLeft"
+                               VerticalOffset="6"
+                               Focusable="False"
+                               IsLightDismissEnabled="True">
+                            <Border Background="#18191E"
+                                    BorderBrush="#2C2D35"
+                                    BorderThickness="1"
+                                    CornerRadius="8"
+                                    Width="240"
+                                    Padding="8">
+                                <StackPanel Spacing="6">
+                                    <Grid ColumnDefinitions="*,Auto" Margin="4,2">
+                                        <TextBlock Grid.Column="0"
+                                                   Text="RECENT SEARCHES"
+                                                   FontSize="10"
+                                                   FontWeight="Bold"
+                                                   Foreground="#A0A0A0"
+                                                   VerticalAlignment="Center"/>
+                                        <Button Grid.Column="1"
+                                                Command="{Binding ClearSearchHistoryCommand}"
+                                                Content="Clear all"
+                                                FontSize="10"
+                                                Foreground="#FF640A"
+                                                Background="Transparent"
+                                                BorderThickness="0"
+                                                Padding="4,2"
+                                                Cursor="Hand"/>
+                                    </Grid>
+                                    <ItemsControl ItemsSource="{Binding SearchHistory}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid ColumnDefinitions="*,Auto" Margin="0,1">
+                                                    <Button Grid.Column="0"
+                                                            Command="{Binding ((vm:MainViewModel)DataContext).SelectSearchHistoryCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                            CommandParameter="{Binding}"
+                                                            Background="Transparent"
+                                                            BorderThickness="0"
+                                                            HorizontalAlignment="Stretch"
+                                                            HorizontalContentAlignment="Left"
+                                                            Padding="6,5"
+                                                            Cursor="Hand">
+                                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                                            <TextBlock Text="🕒" FontSize="11" Foreground="#888888" VerticalAlignment="Center"/>
+                                                            <TextBlock Text="{Binding}" FontSize="12" Foreground="#FFFFFF" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </Button>
+                                                    <Button Grid.Column="1"
+                                                            Command="{Binding ((vm:MainViewModel)DataContext).RemoveSearchHistoryItemCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                            CommandParameter="{Binding}"
+                                                            Content="✕"
+                                                            FontSize="10"
+                                                            Foreground="#888888"
+                                                            Background="Transparent"
+                                                            BorderThickness="0"
+                                                            Padding="6,4"
+                                                            ToolTip.Tip="Remove from search history"
+                                                            Cursor="Hand"/>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Border>
+                        </Popup>
+                    </Panel>
+
+
+
+                    <!-- Watched Manga / Anime History Button -->
+                    <Button Command="{Binding ShowHistoryCommand}"
+                            Background="#18191E"
+                            BorderBrush="#2C2D35"
+                            BorderThickness="1"
+                            CornerRadius="20"
+                            Padding="12,6"
+                            Cursor="Hand"
+                            ToolTip.Tip="Watch &amp; Read History">
+                        <StackPanel Orientation="Horizontal" Spacing="7" VerticalAlignment="Center">
+                            <Path Data="M 12 2 C 6.48 2 2 6.48 2 12 C 2 17.52 6.48 22 12 22 C 17.52 22 22 17.52 22 12 C 22 6.48 17.52 2 12 2 Z M 12 4 C 16.42 4 20 7.58 20 12 C 20 16.42 16.42 20 12 20 C 7.58 20 4 16.42 4 12 C 4 7.58 7.58 4 12 4 Z M 12.5 7 L 11 7 L 11 13 L 16.2 16.2 L 17 14.9 L 12.5 12.2 Z"
+                                  Fill="#FF640A"
+                                  Width="16"
+                                  Height="16"
+                                  Stretch="Uniform"
+                                  VerticalAlignment="Center"/>
+                            <TextBlock Text="History"
+                                       FontSize="12"
+                                       FontWeight="Bold"
+                                       Foreground="#FFFFFF"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- MAIN BODY -->
+        <Grid Grid.Row="1">
+            <!-- Loading Indicator -->
+            <ProgressBar IsIndeterminate="True" 
+                         IsVisible="{Binding IsLoading}" 
+                         Height="2" 
+                         VerticalAlignment="Top" 
+                         Foreground="#FF640A"/>
+
+            <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" Padding="40,25">
+                <StackPanel Spacing="16">
+                    <!-- PAGE HEADER -->
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Grid.Column="0" 
+                                   Text="{Binding PageHeaderTitle}" 
+                                   FontSize="28" 
+                                   FontWeight="Bold" 
+                                   Foreground="#FFFFFF"/>
+
+                        <!-- Action buttons for History or Downloads -->
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                            <!-- Clear All History Button (Visible only on History tab) -->
+                            <Button Command="{Binding RequestClearAllHistoryCommand}"
+                                    IsVisible="{Binding IsHistoryTabActive}"
+                                    Background="#2A1B1B"
+                                    BorderBrush="#E53935"
+                                    BorderThickness="1"
+                                    Padding="12,8"
+                                    CornerRadius="4"
+                                    Cursor="Hand"
+                                    VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="🗑" FontSize="13" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Clear All History" FontSize="12" FontWeight="Bold" Foreground="#FF7070" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+
+                            <!-- Open Downloads Folder Button (Visible only on Downloads tab) -->
+                            <Button Command="{Binding OpenDownloadsFolderCommand}"
+                                    IsVisible="{Binding IsDownloadedTabActive}"
+                                    Background="#18191E"
+                                    BorderBrush="#33343E"
+                                    BorderThickness="1"
+                                    Padding="12,8"
+                                    CornerRadius="4"
+                                    Cursor="Hand"
+                                    VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="📁" FontSize="13" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Open Downloads Folder" FontSize="12" FontWeight="Bold" Foreground="#FFFFFF" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- DISCOVERY & FILTERS SECTION (Visible on Anime & Manga tabs) -->
+                    <Border IsVisible="{Binding IsBrowseTabActive}"
+                            Background="#0F1014"
+                            BorderBrush="#23252C"
+                            BorderThickness="1"
+                            CornerRadius="8"
+                            Padding="16,12"
+                            Margin="0,4,0,0">
+                        <StackPanel Spacing="12">
+                            <!-- Top Filter Controls Row -->
+                            <WrapPanel Orientation="Horizontal">
+                                <!-- Genre / Style Dropdown -->
+                                <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,20,6" VerticalAlignment="Center">
+                                    <TextBlock Text="🎭 Style / Genre:"
+                                               FontSize="12"
+                                               FontWeight="Bold"
+                                               Foreground="#A0A0A0"
+                                               VerticalAlignment="Center"/>
+                                    <ComboBox ItemsSource="{Binding Genres}"
+                                              SelectedItem="{Binding SelectedGenre}"
+                                              CornerRadius="4"
+                                              Background="#18191E"
+                                              BorderBrush="#2C2D35"
+                                              Foreground="#FFFFFF"
+                                              FontSize="12"
+                                              Width="210"
+                                              VerticalAlignment="Center"/>
+                                </StackPanel>
+
+                                <!-- Audio Filter Dropdown + Quick Sub/Dub Buttons (Anime only) -->
+                                <StackPanel Orientation="Horizontal"
+                                            Spacing="8"
+                                            Margin="0,0,20,6"
+                                            VerticalAlignment="Center"
+                                            IsVisible="{Binding IsAnimeTabActive}">
+                                    <TextBlock Text="🔊 Audio:"
+                                               FontSize="12"
+                                               FontWeight="Bold"
+                                               Foreground="#A0A0A0"
+                                               VerticalAlignment="Center"/>
+                                    <ComboBox ItemsSource="{Binding AudioFilters}"
+                                              SelectedItem="{Binding SelectedAudioFilter}"
+                                              CornerRadius="4"
+                                              Background="#18191E"
+                                              BorderBrush="#2C2D35"
+                                              Foreground="#FFFFFF"
+                                              FontSize="12"
+                                              Width="230"
+                                              VerticalAlignment="Center"/>
+                                    <Button Command="{Binding SelectQuickAudioCommand}"
+                                            CommandParameter="sub"
+                                            Content="{Binding QuickSubButtonText}"
+                                            Background="#18191E"
+                                            BorderBrush="{Binding QuickSubButtonBorder}"
+                                            BorderThickness="1"
+                                            CornerRadius="14"
+                                            Padding="10,5"
+                                            FontSize="11"
+                                            FontWeight="SemiBold"
+                                            Foreground="#E0E0E0"
+                                            Cursor="Hand"
+                                            VerticalAlignment="Center"/>
+                                    <Button Command="{Binding SelectQuickAudioCommand}"
+                                            CommandParameter="dub"
+                                            Content="{Binding QuickDubButtonText}"
+                                            Background="#18191E"
+                                            BorderBrush="{Binding QuickDubButtonBorder}"
+                                            BorderThickness="1"
+                                            CornerRadius="14"
+                                            Padding="10,5"
+                                            FontSize="11"
+                                            FontWeight="SemiBold"
+                                            Foreground="#E0E0E0"
+                                            Cursor="Hand"
+                                            VerticalAlignment="Center"/>
+                                </StackPanel>
+
+                                <!-- Reset Filters Button -->
+                                <Button Command="{Binding ResetFiltersCommand}"
+                                        IsVisible="{Binding HasActiveFilters}"
+                                        Content="✕ Reset Filters"
+                                        Background="#2A1B1B"
+                                        BorderBrush="#FF640A"
+                                        BorderThickness="1"
+                                        CornerRadius="14"
+                                        Padding="12,5"
+                                        Margin="0,0,0,6"
+                                        FontSize="11"
+                                        FontWeight="Bold"
+                                        Foreground="#FF640A"
+                                        Cursor="Hand"
+                                        VerticalAlignment="Center"/>
+                            </WrapPanel>
+
+                            <!-- Quick Genre / Style Pills Row -->
+                            <ItemsControl ItemsSource="{Binding QuickGenres}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel Orientation="Horizontal"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Button Command="{Binding ((vm:MainViewModel)DataContext).SelectQuickGenreCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding}"
+                                                Content="{Binding}"
+                                                Background="#18191E"
+                                                BorderBrush="#2C2D35"
+                                                BorderThickness="1"
+                                                CornerRadius="14"
+                                                Padding="11,5"
+                                                Margin="0,0,8,6"
+                                                FontSize="11"
+                                                FontWeight="SemiBold"
+                                                Foreground="#D8D8D8"
+                                                Cursor="Hand"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- SUB-HEADER CATEGORY -->
+                    <TextBlock Text="{Binding PageSubHeader}" FontSize="16" FontWeight="SemiBold" Foreground="#FFFFFF" Margin="0,10,0,8"/>
+
+                    <!-- VERTICAL POSTER CARDS GRID (EXACT CRUNCHYROLL STYLE) -->
+                    <ItemsControl ItemsSource="{Binding Items}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Command="{Binding ((vm:MainViewModel)DataContext).SelectItemCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        CommandParameter="{Binding}"
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        Padding="0"
+                                        Margin="0,0,24,28"
+                                        Cursor="Hand">
+                                    <StackPanel Width="175">
+                                        <!-- Vertical Poster Image Container -->
+                                        <Border Width="175" 
+                                                Height="255" 
+                                                CornerRadius="4" 
+                                                Background="#141519" 
+                                                ClipToBounds="True">
+                                            <Grid>
+                                                <!-- Cover Image from Web -->
+                                                <Image loader:ImageLoader.Source="{Binding Image}" 
+                                                       Stretch="UniformToFill" 
+                                                       IsVisible="{Binding HasImage}" />
+
+                                                <!-- Fallback placeholder if no image -->
+                                                <Grid IsVisible="{Binding !HasImage}" Background="#1E1F26">
+                                                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8">
+                                                        <TextBlock Text="{Binding TypeIcon}" FontSize="32" HorizontalAlignment="Center"/>
+                                                        <TextBlock Text="{Binding Title}" 
+                                                                   FontSize="11" 
+                                                                   FontWeight="Bold"
+                                                                   Foreground="#A0A0A0" 
+                                                                   TextWrapping="Wrap" 
+                                                                   TextAlignment="Center"
+                                                                   Margin="8,0"/>
+                                                    </StackPanel>
+                                                </Grid>
+
+                                                <!-- Top-Right Crunchyroll Orange Bookmark Ribbon (Vector notched flag, no emoji) -->
+                                                <Path Data="M 0 0 L 14 0 L 14 20 L 7 15 L 0 20 Z" 
+                                                      Fill="#FF640A" 
+                                                      Width="14" 
+                                                      Height="20" 
+                                                      Stretch="Fill" 
+                                                      HorizontalAlignment="Right" 
+                                                      VerticalAlignment="Top"
+                                                      Margin="0,0,10,0"/>
+
+                                                <!-- Bottom Source Pill Overlay -->
+                                                <Border HorizontalAlignment="Left" 
+                                                        VerticalAlignment="Bottom" 
+                                                        Background="#B3000000" 
+                                                        CornerRadius="0,6,0,0"
+                                                        Padding="6,2">
+                                                    <TextBlock Text="{Binding SourceLabel}" FontSize="9" FontWeight="Bold" Foreground="#FFFFFF"/>
+                                                </Border>
+                                            </Grid>
+                                        </Border>
+
+                                        <!-- Anime / Manga Title Below Poster -->
+                                        <TextBlock Text="{Binding Title}" 
+                                                   FontWeight="SemiBold" 
+                                                   FontSize="13" 
+                                                   Foreground="#FFFFFF" 
+                                                   TextWrapping="Wrap" 
+                                                   MaxLines="2"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   Margin="0,8,0,3"/>
+
+                                        <!-- Subtitle: Sub | Dub (Exact Crunchyroll caption) -->
+                                        <TextBlock Text="{Binding SubDubText}" 
+                                                   FontSize="12" 
+                                                   Foreground="#A0A0A0"/>
+                                    </StackPanel>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- CRUNCHYROLL DETAIL POPUP / MODAL (WHEN A CARD IS CLICKED) -->
+            <Border Background="#EB000000" 
+                    VerticalAlignment="Bottom"
+                    BorderBrush="#252528"
+                    BorderThickness="0,1,0,0"
+                    Padding="35,22"
+                    IsVisible="{Binding SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                    <!-- Left: Poster Thumbnail -->
+                    <Border Grid.Column="0" Width="70" Height="100" CornerRadius="4" ClipToBounds="True" Background="#141519" Margin="0,0,20,0">
+                        <Image loader:ImageLoader.Source="{Binding SelectedItem.Image}" Stretch="UniformToFill"/>
+                    </Border>
+
+                    <!-- Middle: Title & Metadata (Strictly bounded and clipped to prevent overlap with buttons) -->
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="6" Margin="0,0,25,0" ClipToBounds="True">
+                        <DockPanel LastChildFill="True">
+                            <Border DockPanel.Dock="Right" CornerRadius="4" Padding="6,2" Background="#FF640A" VerticalAlignment="Center" Margin="10,0,0,0">
+                                <TextBlock Text="{Binding SelectedItem.AudioBadge}" FontSize="10" FontWeight="Black" Foreground="#000000"/>
+                            </Border>
+                            <TextBlock Text="{Binding SelectedItem.Title}" 
+                                       FontWeight="Black" 
+                                       FontSize="18" 
+                                       Foreground="#FFFFFF" 
+                                       TextWrapping="Wrap" 
+                                       MaxLines="2" 
+                                       TextTrimming="CharacterEllipsis"
+                                       VerticalAlignment="Center"/>
+                        </DockPanel>
+                        <TextBlock Text="{Binding SelectedItem.SubDubText}" FontSize="13" Foreground="#FF640A" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Text="{Binding SelectedItem.SourceLabel, StringFormat='Source provider: {0}'}" FontSize="12" Foreground="#808080" TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+
+                    <!-- Right: Episode/Chapter Picker & Action Buttons (FIXED POSITIONS) -->
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="16" VerticalAlignment="Center">
+                        <!-- 1. Number Selector & Unmark Status (Fixed Slot) -->
+                        <StackPanel Spacing="6" VerticalAlignment="Center" Width="265">
+                            <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding NumberLabel}" Foreground="#A0A0A0" FontSize="13" VerticalAlignment="Center" Width="56"/>
+                                
+                                <Button Command="{Binding JumpToFirstNumberCommand}"
+                                        ToolTip.Tip="Jump to first (1)"
+                                        Width="24"
+                                        Height="28"
+                                        Padding="0"
+                                        Background="#1E1F26"
+                                        BorderBrush="#33343E"
+                                        BorderThickness="1"
+                                        Foreground="#888888"
+                                        FontWeight="Bold"
+                                        FontSize="11"
+                                        CornerRadius="4"
+                                        HorizontalContentAlignment="Center"
+                                        VerticalContentAlignment="Center"
+                                        Cursor="Hand"
+                                        Content="|◀"/>
+
+                                <Button Command="{Binding DecrementNumberCommand}"
+                                        ToolTip.Tip="Previous"
+                                        Width="26"
+                                        Height="28"
+                                        Padding="0"
+                                        Background="#1E1F26"
+                                        BorderBrush="#33343E"
+                                        BorderThickness="1"
+                                        Foreground="#CCCCCC"
+                                        FontWeight="Bold"
+                                        FontSize="13"
+                                        CornerRadius="4"
+                                        HorizontalContentAlignment="Center"
+                                        VerticalContentAlignment="Center"
+                                        Cursor="Hand"
+                                        Content="−"/>
+
+                                <TextBox Text="{Binding SelectedNumberText, Mode=TwoWay}"
+                                         LostFocus="OnSelectedNumberLostFocus"
+                                         ToolTip.Tip="Type episode or chapter number directly (1 to max)"
+                                         Width="60"
+                                         Height="28"
+                                         HorizontalContentAlignment="Center"
+                                         VerticalContentAlignment="Center"
+                                         CornerRadius="4"
+                                         Background="#141519"
+                                         BorderBrush="#FF640A"
+                                         BorderThickness="1"
+                                         Foreground="#FFFFFF"
+                                         FontSize="14"
+                                         FontWeight="Bold"
+                                         Padding="2,0"/>
+
+                                <Button Command="{Binding IncrementNumberCommand}"
+                                        ToolTip.Tip="Next"
+                                        Width="26"
+                                        Height="28"
+                                        Padding="0"
+                                        Background="#1E1F26"
+                                        BorderBrush="#33343E"
+                                        BorderThickness="1"
+                                        Foreground="#CCCCCC"
+                                        FontWeight="Bold"
+                                        FontSize="13"
+                                        CornerRadius="4"
+                                        HorizontalContentAlignment="Center"
+                                        VerticalContentAlignment="Center"
+                                        Cursor="Hand"
+                                        Content="+"/>
+
+                                <Button Command="{Binding JumpToMaxNumberCommand}"
+                                        ToolTip.Tip="Jump to latest"
+                                        Width="24"
+                                        Height="28"
+                                        Padding="0"
+                                        Background="#1E1F26"
+                                        BorderBrush="#33343E"
+                                        BorderThickness="1"
+                                        Foreground="#888888"
+                                        FontWeight="Bold"
+                                        FontSize="11"
+                                        CornerRadius="4"
+                                        HorizontalContentAlignment="Center"
+                                        VerticalContentAlignment="Center"
+                                        Cursor="Hand"
+                                        Content="▶|"/>
+
+                                <Button Command="{Binding JumpToMaxNumberCommand}"
+                                        ToolTip.Tip="Click to select latest episode"
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        Padding="2,0"
+                                        Cursor="Hand"
+                                        VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding MaxNumber, StringFormat='/{0}'}" 
+                                               Foreground="#FF9A60" 
+                                               FontSize="12" 
+                                               FontWeight="SemiBold"/>
+                                </Button>
+                            </StackPanel>
+
+                            <!-- Unmark Button below the selector (Fixed height, never shifts Play button) -->
+                            <Border Height="26" VerticalAlignment="Center">
+                                <Button Command="{Binding UnmarkCurrentNumberCommand}"
+                                        ToolTip.Tip="Remove this episode/chapter from history"
+                                        Padding="8,3"
+                                        CornerRadius="3"
+                                        Background="#241414"
+                                        BorderBrush="#8A2525"
+                                        BorderThickness="1"
+                                        Cursor="Hand"
+                                        HorizontalAlignment="Left"
+                                        Margin="64,0,0,0"
+                                        IsVisible="{Binding IsCurrentNumberWatched}">
+                                    <TextBlock Text="{Binding UnmarkButtonText}" FontSize="10" FontWeight="SemiBold" Foreground="#FF8080"/>
+                                </Button>
+                            </Border>
+                        </StackPanel>
+
+                        <!-- 2. Main Play Button (FIXED POSITION & WIDTH) -->
+                        <Button Command="{Binding PlayOrReadCommand}" 
+                                Padding="22,14" 
+                                CornerRadius="4" 
+                                Background="#FF640A"
+                                Foreground="#000000"
+                                FontWeight="Black"
+                                Cursor="Hand"
+                                MinWidth="165"
+                                VerticalAlignment="Center">
+                            <TextBlock Text="{Binding ActionButtonText}" FontSize="13" FontWeight="Black" Foreground="#000000" HorizontalAlignment="Center"/>
+                        </Button>
+
+                        <!-- 3. Download Button -->
+                        <Button Command="{Binding DownloadCurrentItemCommand}"
+                                ToolTip.Tip="Download this episode/chapter for offline viewing"
+                                Padding="16,14"
+                                CornerRadius="4"
+                                Background="#1E1F26"
+                                BorderBrush="#33343E"
+                                BorderThickness="1"
+                                Foreground="#FFFFFF"
+                                FontWeight="Bold"
+                                Cursor="Hand"
+                                VerticalAlignment="Center"
+                                IsEnabled="{Binding !IsDownloading}">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="{Binding DownloadIconText}" FontSize="13" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding DownloadButtonText}" FontSize="13" FontWeight="Bold" Foreground="#FFFFFF" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- 3. Utility buttons (Trash & Close in FIXED POSITIONS) -->
+                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                            <Button Command="{Binding RequestRemoveItemCommand}" 
+                                    ToolTip.Tip="Remove this title from history"
+                                    Background="#1F1F23" 
+                                    Foreground="#A0A0A0"
+                                    CornerRadius="4" 
+                                    Padding="12,12"
+                                    Cursor="Hand"
+                                    Content="🗑"/>
+
+                            <Button Command="{Binding CloseDetailsCommand}" 
+                                    ToolTip.Tip="Close"
+                                    Content="✕" 
+                                    Background="#1F1F23" 
+                                    Foreground="#A0A0A0"
+                                    CornerRadius="4" 
+                                    Padding="12,12"
+                                    Cursor="Hand"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- MODAL CONFIRMATION DIALOG -->
+        <Border Grid.Row="0" Grid.RowSpan="3"
+                Background="#B0000000"
+                IsVisible="{Binding IsConfirmDialogVisible}"
+                ZIndex="100">
+            <Border Background="#18191E"
+                    BorderBrush="#33343E"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="30"
+                    MaxWidth="480"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+                <StackPanel Spacing="18">
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <TextBlock Text="⚠️" FontSize="22" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding ConfirmDialogTitle}" 
+                                   FontWeight="Black" 
+                                   FontSize="18" 
+                                   Foreground="#FFFFFF" 
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+
+                    <TextBlock Text="{Binding ConfirmDialogMessage}" 
+                               FontSize="13" 
+                               Foreground="#C0C0C0" 
+                               TextWrapping="Wrap" 
+                               LineHeight="20"/>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12" Margin="0,10,0,0">
+                        <Button Command="{Binding CancelDialogActionCommand}"
+                                Content="Cancel"
+                                Padding="18,10"
+                                Background="#2A2B32"
+                                Foreground="#D0D0D0"
+                                FontWeight="SemiBold"
+                                CornerRadius="4"
+                                Cursor="Hand"/>
+
+                        <Button Command="{Binding ConfirmDialogActionCommand}"
+                                Content="Confirm &amp; Delete"
+                                Padding="18,10"
+                                Background="#D32F2F"
+                                Foreground="#FFFFFF"
+                                FontWeight="Bold"
+                                CornerRadius="4"
+                                Cursor="Hand"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Border>
+
+        <!-- AUTO-UPDATER MODAL DIALOG -->
+        <Border Grid.Row="0" Grid.RowSpan="3"
+                Background="#B8000000"
+                IsVisible="{Binding IsUpdateDialogVisible}"
+                ZIndex="110">
+            <Border Background="#18191E"
+                    BorderBrush="#FF640A"
+                    BorderThickness="1.5"
+                    CornerRadius="10"
+                    Padding="30"
+                    MaxWidth="540"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+                <StackPanel Spacing="16">
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <TextBlock Text="🚀" FontSize="24" VerticalAlignment="Center"/>
+                        <TextBlock Text="Nuovo Aggiornamento Disponibile!"
+                                   FontWeight="Black"
+                                   FontSize="19"
+                                   Foreground="#FFFFFF"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+
+                    <Border Background="#111216"
+                            BorderBrush="#2C2D35"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="14,10">
+                        <Grid ColumnDefinitions="*,Auto,*">
+                            <StackPanel Grid.Column="0" HorizontalAlignment="Center">
+                                <TextBlock Text="VERSIONE INSTALLATA" FontSize="10" FontWeight="Bold" Foreground="#808080" HorizontalAlignment="Center"/>
+                                <TextBlock Text="{Binding InstalledVersionText}" FontSize="15" FontWeight="Bold" Foreground="#C0C0C0" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                            </StackPanel>
+                            <TextBlock Grid.Column="1" Text="➔" FontSize="18" Foreground="#FF640A" VerticalAlignment="Center" Margin="18,0"/>
+                            <StackPanel Grid.Column="2" HorizontalAlignment="Center">
+                                <TextBlock Text="NUOVA VERSIONE ONLINE" FontSize="10" FontWeight="Bold" Foreground="#FF640A" HorizontalAlignment="Center"/>
+                                <TextBlock Text="{Binding RemoteVersionText}" FontSize="15" FontWeight="Black" Foreground="#4ADE80" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <TextBlock Text="È disponibile una versione più recente di Manga GUI. Vuoi scaricare, compilare e avviare l'aggiornamento adesso? Tutte le dipendenze necessarie (git, nodejs, npm, dotnet, mpv, curl) verranno verificate e installate automaticamente se mancanti."
+                               FontSize="12.5"
+                               Foreground="#D0D0D0"
+                               TextWrapping="Wrap"
+                               LineHeight="19"/>
+
+                    <Border Background="#121318"
+                            BorderBrush="#262830"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="12,10"
+                            IsVisible="{Binding HasUpdateNotes}">
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="📋 Novità di questa versione:" FontSize="11" FontWeight="Bold" Foreground="#FF640A"/>
+                            <TextBlock Text="{Binding UpdateNotesText}" FontSize="12" Foreground="#B8B8C0" TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Background="#0D0E12"
+                            BorderBrush="#2C2D35"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="12,10"
+                            IsVisible="{Binding HasUpdateProgress}">
+                        <TextBlock Text="{Binding UpdateProgressLog}"
+                                   FontSize="11.5"
+                                   FontFamily="Monospace"
+                                   Foreground="#4ADE80"
+                                   TextWrapping="Wrap"/>
+                    </Border>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12" Margin="0,6,0,0">
+                        <Button Command="{Binding DismissUpdateDialogCommand}"
+                                IsEnabled="{Binding !IsUpdating}"
+                                Content="Più tardi"
+                                Padding="16,10"
+                                Background="#2A2B32"
+                                Foreground="#D0D0D0"
+                                FontWeight="SemiBold"
+                                CornerRadius="4"
+                                Cursor="Hand"/>
+
+                        <Button Command="{Binding StartUpdateCommand}"
+                                IsEnabled="{Binding !IsUpdating}"
+                                Content="{Binding UpdateConfirmButtonText}"
+                                Padding="18,10"
+                                Background="#FF640A"
+                                Foreground="#000000"
+                                FontWeight="Black"
+                                CornerRadius="4"
+                                Cursor="Hand"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Border>
+
+        <!-- CRUNCHYROLL BOTTOM STATUS BAR -->
+        <Border Grid.Row="2" Background="#0A0A0C" BorderBrush="#1C1C1E" BorderThickness="0,1,0,0" Padding="30,8">
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Grid.Column="0" Text="{Binding StatusText}" Foreground="#808080" FontSize="12" VerticalAlignment="Center"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                    <Button Command="{Binding CheckUpdatesCommand}"
+                            Content="🔄 Check Updates"
+                            Background="#16171C"
+                            BorderBrush="#2C2D35"
+                            BorderThickness="1"
+                            Foreground="#B0B0B0"
+                            FontSize="11"
+                            Padding="10,4"
+                            CornerRadius="4"
+                            Cursor="Hand"/>
+                    <TextBlock Text="{Binding AppVersionText}" Foreground="#606060" FontSize="12" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

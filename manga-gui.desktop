@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Manga GUI
+Comment=Modern desktop client to stream anime and read manga with MPV integration and offline downloads
+Exec=manga-gui %U
+Icon=manga-gui
+Terminal=false
+Type=Application
+Categories=AudioVideo;Video;Viewer;Graphics;
+Keywords=anime;manga;stream;reader;
+StartupNotify=true
