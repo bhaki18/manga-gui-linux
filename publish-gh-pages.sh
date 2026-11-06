@@ -198,6 +198,7 @@ if [ "$PUB_DEB" = true ] && [ -n "$LATEST_DEB" ] && [ -f "$LATEST_DEB" ]; then
     mkdir -p "$TMP_DIR/deb"
     rm -f "$TMP_DIR"/deb/*.deb
     cp -f "$LATEST_DEB" "$TMP_DIR/deb/"
+    cp -f "$LATEST_DEB" "$TMP_DIR/deb/manga-gui_latest_amd64.deb"
     STAGED_PATHS+=("deb/")
 fi
 
@@ -207,7 +208,8 @@ if [ "$PUB_TAR" = true ] && [ -n "$LATEST_TAR" ] && [ -f "$LATEST_TAR" ]; then
     mkdir -p "$TMP_DIR/tar"
     rm -f "$TMP_DIR"/tar/*.tar.gz
     cp -f "$LATEST_TAR" "$TMP_DIR/tar/"
-    STAGED_PATHS+=("tar/")
+    cp -f "$LATEST_TAR" "$TMP_DIR/manga-gui-linux-x64.tar.gz"
+    STAGED_PATHS+=("tar/" "manga-gui-linux-x64.tar.gz")
 fi
 
 # 8. Sezione Windows ZIP (ISOLATA NELLA CARTELLA windows/)

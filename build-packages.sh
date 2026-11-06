@@ -115,8 +115,8 @@ if [ -f "./PKGBUILD" ]; then
   "rawVersionUrl": "https://raw.githubusercontent.com/bhaki18/manga-gui-linux/main/linux_version.json",
   "ghPagesVersionUrl": "https://raw.githubusercontent.com/bhaki18/manga-cli/gh-pages/linux_version.json",
   "archPackageUrl": "https://raw.githubusercontent.com/bhaki18/manga-cli/gh-pages/x86_64/manga-gui-bin-${FULL_VER}-x86_64.pkg.tar.zst",
-  "debPackageUrl": "https://raw.githubusercontent.com/bhaki18/manga-cli/gh-pages/manga-gui_${FULL_VER}_amd64.deb",
-  "linuxTarballUrl": "https://raw.githubusercontent.com/bhaki18/manga-cli/gh-pages/manga-gui-linux-x64.tar.gz",
+  "debPackageUrl": "https://raw.githubusercontent.com/bhaki18/manga-cli/gh-pages/deb/manga-gui_${FULL_VER}_amd64.deb",
+  "linuxTarballUrl": "https://raw.githubusercontent.com/bhaki18/manga-cli/gh-pages/tar/manga-gui-linux-x64.tar.gz",
   "notes": $(node -e 'console.log(JSON.stringify(process.argv[1]))' "$EXISTING_NOTES" 2>/dev/null || echo "\"$EXISTING_NOTES\"")
 }
 EOF
