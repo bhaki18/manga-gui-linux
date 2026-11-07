@@ -349,9 +349,9 @@ public class UpdateService
             sb.AppendLine("");
             sb.AppendLine("# 1. Arch Linux (pacman) - download pacchetto precompilato o pacman");
             sb.AppendLine("if [ \"$UPDATED\" = \"false\" ] && command -v pacman >/dev/null 2>&1; then");
-            sb.AppendLine("  echo \"[STEP 1/3] Sistema Arch Linux rilevato. Aggiornamento pacchetto pacman...\"");
+            sb.AppendLine("  echo \"[STEP 1/3] Arch Linux system detected. Updating pacman package...\"");
             sb.AppendLine("  if [ -n \"$ARCH_PKG_URL\" ]; then");
-            sb.AppendLine("    echo \"Download pacchetto Arch ufficiale ($REMOTE_VER)...\"");
+            sb.AppendLine("    echo \"Downloading official Arch package ($REMOTE_VER)...\"");
             sb.AppendLine("    TMP_PKG=\"/tmp/manga-gui-bin-update.pkg.tar.zst\"");
             sb.AppendLine("    if curl -fL --retry 3 -o \"$TMP_PKG\" \"$ARCH_PKG_URL\"; then");
             sb.AppendLine("      run_privileged pacman -U --noconfirm \"$TMP_PKG\" && UPDATED=true");
@@ -365,7 +365,7 @@ public class UpdateService
             sb.AppendLine("");
             sb.AppendLine("# 2. Debian / Ubuntu (.deb)");
             sb.AppendLine("if [ \"$UPDATED\" = \"false\" ] && command -v dpkg >/dev/null 2>&1 && [ -n \"$DEB_PKG_URL\" ]; then");
-            sb.AppendLine("  echo \"[STEP 1/3] Sistema Debian/Ubuntu rilevato. Aggiornamento pacchetto .deb...\"");
+            sb.AppendLine("  echo \"[STEP 1/3] Debian/Ubuntu system detected. Updating .deb package...\"");
             sb.AppendLine("  TMP_DEB=\"/tmp/manga-gui-update.deb\"");
             sb.AppendLine("  if curl -fL --retry 3 -o \"$TMP_DEB\" \"$DEB_PKG_URL\"; then");
             sb.AppendLine("    (run_privileged dpkg -i \"$TMP_DEB\" || run_privileged apt-get install -f -y) && UPDATED=true");
@@ -486,17 +486,17 @@ public class UpdateService
 
             if (proc.ExitCode == 0)
             {
-                onProgress?.Invoke("✔ Aggiornamento completato! Riavvio dell'applicazione in corso...");
+                onProgress?.Invoke("✔ Update completed! Restarting application...");
                 await Task.Delay(900);
                 Environment.Exit(0);
-                return (true, "Aggiornamento completato con successo.");
+                return (true, "Update completed successfully.");
             }
 
-            return (false, $"L'aggiornamento è terminato con codice {proc.ExitCode}.");
+            return (false, $"Update finished with exit code {proc.ExitCode}.");
         }
         catch (Exception ex)
         {
-            return (false, $"Errore durante l'aggiornamento: {ex.Message}");
+            return (false, $"Error during update: {ex.Message}");
         }
     }
 
@@ -546,7 +546,7 @@ public class UpdateService
                 {
                     try
                     {
-                        onProgress?.Invoke($"[1/3] Scaricamento pacchetto precompilato v{updateInfo.RemoteVersion}...");
+                        onProgress?.Invoke($"[1/3] Downloading prebuilt package v{updateInfo.RemoteVersion}...");
                         using var res = await http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
                         if (res.IsSuccessStatusCode)
                         {
@@ -564,14 +564,14 @@ public class UpdateService
 
             if (zipDownloaded && File.Exists(zipPath))
             {
-                onProgress?.Invoke("[2/3] Estrazione file aggiornati in corso...");
+                onProgress?.Invoke("[2/3] Extracting updated files...");
                 Directory.CreateDirectory(outDir);
                 ZipFile.ExtractToDirectory(zipPath, outDir, overwriteFiles: true);
 
                 var subFolder = Path.Combine(outDir, "manga-gui-win-x64");
                 var effectiveOutDir = Directory.Exists(subFolder) ? subFolder : outDir;
 
-                // Assicurati che version.json contenga la versione aggiornata
+                // Ensure version.json contains the updated version
                 var verFile = Path.Combine(effectiveOutDir, "version.json");
                 if (!File.Exists(verFile))
                 {
@@ -579,7 +579,7 @@ public class UpdateService
                     await File.WriteAllTextAsync(verFile, verJson);
                 }
 
-                onProgress?.Invoke("[3/3] Applicazione aggiornamento e riavvio Manga GUI...");
+                onProgress?.Invoke("[3/3] Applying update and restarting Manga GUI...");
 
                 var applyBat = new StringBuilder();
                 applyBat.AppendLine("@echo off");
@@ -602,10 +602,10 @@ public class UpdateService
 
                 await Task.Delay(800);
                 Environment.Exit(0);
-                return (true, "Aggiornamento Windows completato.");
+                return (true, "Windows update completed.");
             }
 
-            // Fallback: Compilazione da sorgente tramite Git se il download dello ZIP non è riuscito
+            // Fallback: Build from source via Git if ZIP download was unsuccessful
             var repoUrl = !string.IsNullOrWhiteSpace(updateInfo.RepoUrl) ? updateInfo.RepoUrl : DefaultRepoUrl;
             var buildBatPath = Path.Combine(tempDir, "build-update.bat");
 
@@ -613,12 +613,12 @@ public class UpdateService
             buildBat.AppendLine("@echo off");
             buildBat.AppendLine("setlocal EnableDelayedExpansion");
             buildBat.AppendLine("set \"PATH=%PATH%;C:\\Program Files\\Git\\cmd;C:\\Program Files\\nodejs;C:\\Program Files\\dotnet\"");
-            buildBat.AppendLine("echo [STEP 1/4] Verifica e installazione dipendenze Windows (Git, Node.js, .NET SDK, VC++ Redist)...");
-            buildBat.AppendLine("where git >nul 2>nul || (echo Installazione Git... && winget install --id Git.Git -e --silent --accept-package-agreements --accept-source-agreements)");
-            buildBat.AppendLine("where node >nul 2>nul || (echo Installazione Node.js... && winget install --id OpenJS.NodeJS.LTS -e --silent --accept-package-agreements --accept-source-agreements)");
-            buildBat.AppendLine("where dotnet >nul 2>nul || (echo Installazione .NET 10 SDK... && winget install --id Microsoft.DotNet.SDK.10 -e --silent --accept-package-agreements --accept-source-agreements)");
+            buildBat.AppendLine("echo [STEP 1/4] Verifying and installing Windows dependencies (Git, Node.js, .NET SDK, VC++ Redist)...");
+            buildBat.AppendLine("where git >nul 2>nul || (echo Installing Git... && winget install --id Git.Git -e --silent --accept-package-agreements --accept-source-agreements)");
+            buildBat.AppendLine("where node >nul 2>nul || (echo Installing Node.js... && winget install --id OpenJS.NodeJS.LTS -e --silent --accept-package-agreements --accept-source-agreements)");
+            buildBat.AppendLine("where dotnet >nul 2>nul || (echo Installing .NET 10 SDK... && winget install --id Microsoft.DotNet.SDK.10 -e --silent --accept-package-agreements --accept-source-agreements)");
             buildBat.AppendLine("set \"PATH=%PATH%;C:\\Program Files\\Git\\cmd;C:\\Program Files\\nodejs;C:\\Program Files\\dotnet\"");
-            buildBat.AppendLine($"echo [STEP 2/4] Scaricamento ultima versione ({updateInfo.RemoteVersion}) da {repoUrl}...");
+            buildBat.AppendLine($"echo [STEP 2/4] Downloading latest version ({updateInfo.RemoteVersion}) from {repoUrl}...");
             buildBat.AppendLine($"if exist \"{tempDir}\\src\\.git\" (");
             buildBat.AppendLine($"  cd /d \"{tempDir}\\src\" && git fetch --depth 1 origin main && git reset --hard origin/main");
             buildBat.AppendLine(") else (");
@@ -626,7 +626,7 @@ public class UpdateService
             buildBat.AppendLine($"  git clone --depth 1 \"{repoUrl}\" \"{tempDir}\\src\"");
             buildBat.AppendLine(")");
             buildBat.AppendLine("if errorlevel 1 exit /b 1");
-            buildBat.AppendLine("echo [STEP 3/4] Installazione dipendenze CLI (npm) e compilazione MangaGui.exe...");
+            buildBat.AppendLine("echo [STEP 3/4] Installing CLI dependencies (npm) and building MangaGui.exe...");
             buildBat.AppendLine($"if exist \"{tempDir}\\src\\cli\\package.json\" (cd /d \"{tempDir}\\src\\cli\" && call npm install --no-audit --no-fund)");
             buildBat.AppendLine($"cd /d \"{tempDir}\\src\"");
             buildBat.AppendLine($"dotnet publish MangaGui.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o \"{tempDir}\\out\"");
@@ -635,7 +635,7 @@ public class UpdateService
             buildBat.AppendLine($"if exist \"{tempDir}\\src\\cli\\node_modules\" xcopy /E /I /Y \"{tempDir}\\src\\cli\\node_modules\" \"{tempDir}\\out\\cli\\node_modules\" >nul");
             buildBat.AppendLine($"if exist \"{tempDir}\\src\\version.json\" copy /Y \"{tempDir}\\src\\version.json\" \"{tempDir}\\out\\version.json\" >nul");
             buildBat.AppendLine($"if exist \"{tempDir}\\src\\Assets\\manga-gui.ico\" copy /Y \"{tempDir}\\src\\Assets\\manga-gui.ico\" \"{tempDir}\\out\\manga-gui.ico\" >nul");
-            buildBat.AppendLine("echo [STEP 4/4] Compilazione Windows completata! Preparazione riavvio...");
+            buildBat.AppendLine("echo [STEP 4/4] Windows build completed! Preparing restart...");
             buildBat.AppendLine("exit /b 0");
 
             await File.WriteAllTextAsync(buildBatPath, buildBat.ToString());
@@ -678,7 +678,7 @@ public class UpdateService
 
             if (proc.ExitCode == 0)
             {
-                onProgress?.Invoke("✔ Aggiornamento Windows pronto! Riavvio in corso...");
+                onProgress?.Invoke("✔ Windows update ready! Restarting...");
                 Process.Start(new ProcessStartInfo
                 {
                     FileName = "cmd.exe",
@@ -688,10 +688,10 @@ public class UpdateService
                 });
                 await Task.Delay(800);
                 Environment.Exit(0);
-                return (true, "Aggiornamento Windows completato.");
+                return (true, "Windows update completed.");
             }
 
-            return (false, $"L'aggiornamento Windows è terminato con codice {proc.ExitCode}.");
+            return (false, $"Windows update finished with exit code {proc.ExitCode}.");
         }
         catch (Exception ex)
         {

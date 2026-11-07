@@ -642,6 +642,38 @@
                             </Border>
                         </StackPanel>
 
+                        <!-- Audio Track Selector (SUB / DUB) for Anime -->
+                        <Border IsVisible="{Binding IsAudioSelectorVisible}"
+                                VerticalAlignment="Center"
+                                Background="#141519"
+                                BorderBrush="#2C2D35"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                Padding="3">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <Button Command="{Binding ChooseSubAudioCommand}"
+                                        IsEnabled="{Binding CanSelectSub}"
+                                        Background="{Binding SubOptionBackground}"
+                                        Foreground="{Binding SubOptionForeground}"
+                                        Padding="8,5"
+                                        CornerRadius="3"
+                                        Cursor="Hand"
+                                        ToolTip.Tip="Select SUB (Subtitled)">
+                                    <TextBlock Text="SUB" FontSize="11" FontWeight="Bold"/>
+                                </Button>
+                                <Button Command="{Binding ChooseDubAudioCommand}"
+                                        IsEnabled="{Binding CanSelectDub}"
+                                        Background="{Binding DubOptionBackground}"
+                                        Foreground="{Binding DubOptionForeground}"
+                                        Padding="8,5"
+                                        CornerRadius="3"
+                                        Cursor="Hand"
+                                        ToolTip.Tip="Select DUB (Dubbed)">
+                                    <TextBlock Text="DUB" FontSize="11" FontWeight="Bold"/>
+                                </Button>
+                            </StackPanel>
+                        </Border>
+
                         <!-- 2. Main Play Button (FIXED POSITION & WIDTH) -->
                         <Button Command="{Binding PlayOrReadCommand}" 
                                 Padding="22,14" 
@@ -767,7 +799,7 @@
                 <StackPanel Spacing="16">
                     <StackPanel Orientation="Horizontal" Spacing="12">
                         <TextBlock Text="🚀" FontSize="24" VerticalAlignment="Center"/>
-                        <TextBlock Text="Nuovo Aggiornamento Disponibile!"
+                        <TextBlock Text="New Update Available!"
                                    FontWeight="Black"
                                    FontSize="19"
                                    Foreground="#FFFFFF"
@@ -781,18 +813,18 @@
                             Padding="14,10">
                         <Grid ColumnDefinitions="*,Auto,*">
                             <StackPanel Grid.Column="0" HorizontalAlignment="Center">
-                                <TextBlock Text="VERSIONE INSTALLATA" FontSize="10" FontWeight="Bold" Foreground="#808080" HorizontalAlignment="Center"/>
+                                <TextBlock Text="INSTALLED VERSION" FontSize="10" FontWeight="Bold" Foreground="#808080" HorizontalAlignment="Center"/>
                                 <TextBlock Text="{Binding InstalledVersionText}" FontSize="15" FontWeight="Bold" Foreground="#C0C0C0" HorizontalAlignment="Center" Margin="0,4,0,0"/>
                             </StackPanel>
                             <TextBlock Grid.Column="1" Text="➔" FontSize="18" Foreground="#FF640A" VerticalAlignment="Center" Margin="18,0"/>
                             <StackPanel Grid.Column="2" HorizontalAlignment="Center">
-                                <TextBlock Text="NUOVA VERSIONE ONLINE" FontSize="10" FontWeight="Bold" Foreground="#FF640A" HorizontalAlignment="Center"/>
+                                <TextBlock Text="NEW VERSION ONLINE" FontSize="10" FontWeight="Bold" Foreground="#FF640A" HorizontalAlignment="Center"/>
                                 <TextBlock Text="{Binding RemoteVersionText}" FontSize="15" FontWeight="Black" Foreground="#4ADE80" HorizontalAlignment="Center" Margin="0,4,0,0"/>
                             </StackPanel>
                         </Grid>
                     </Border>
 
-                    <TextBlock Text="È disponibile una versione più recente di Manga GUI. Vuoi scaricare, compilare e avviare l'aggiornamento adesso? Tutte le dipendenze necessarie (git, nodejs, npm, dotnet, mpv, curl) verranno verificate e installate automaticamente se mancanti."
+                    <TextBlock Text="A newer version of Manga GUI is available. Would you like to download, install and launch the update now? All necessary dependencies will be automatically verified."
                                FontSize="12.5"
                                Foreground="#D0D0D0"
                                TextWrapping="Wrap"
@@ -805,7 +837,7 @@
                             Padding="12,10"
                             IsVisible="{Binding HasUpdateNotes}">
                         <StackPanel Spacing="4">
-                            <TextBlock Text="📋 Novità di questa versione:" FontSize="11" FontWeight="Bold" Foreground="#FF640A"/>
+                            <TextBlock Text="📋 What's new in this version:" FontSize="11" FontWeight="Bold" Foreground="#FF640A"/>
                             <TextBlock Text="{Binding UpdateNotesText}" FontSize="12" Foreground="#B8B8C0" TextWrapping="Wrap"/>
                         </StackPanel>
                     </Border>
@@ -826,7 +858,7 @@
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12" Margin="0,6,0,0">
                         <Button Command="{Binding DismissUpdateDialogCommand}"
                                 IsEnabled="{Binding !IsUpdating}"
-                                Content="Più tardi"
+                                Content="Later"
                                 Padding="16,10"
                                 Background="#2A2B32"
                                 Foreground="#D0D0D0"

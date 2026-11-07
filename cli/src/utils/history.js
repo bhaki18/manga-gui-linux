@@ -417,7 +417,7 @@ function getAllHistory() {
         audio: val.audio || 'both',
         count: episodes.length,
         lastAccessedAt: val.lastWatchedAt || val.lastReadAt || null,
-        lastItem: lastEp ? (lastEp.title || `Episodio ${lastEp.id}`) : null
+        lastItem: lastEp ? (lastEp.title || `Episode ${lastEp.id}`) : null
       });
     } else {
       const chapters = Array.isArray(val.readChapters) ? [...val.readChapters] : [];
@@ -437,7 +437,7 @@ function getAllHistory() {
         language: val.language || 'it',
         count: chapters.length,
         lastAccessedAt: val.lastReadAt || null,
-        lastItem: lastCh ? (lastCh.title || `Capitolo ${lastCh.id}`) : null
+        lastItem: lastCh ? (lastCh.title || `Chapter ${lastCh.id}`) : null
       });
     }
   }
@@ -518,7 +518,7 @@ function setMangaProgress(mangaKey, mangaTitle, chapterNum, mangaMetadata = {}) 
   existingChapters.push({
     id: safeNum,
     url: mangaMetadata.url || (history[targetKey] && history[targetKey].url) || '',
-    title: `Capitolo ${safeNum}`,
+    title: `Chapter ${safeNum}`,
     readAt: new Date().toISOString()
   });
 
@@ -566,7 +566,7 @@ function setAnimeProgress(animeKey, animeTitle, episodeNum, animeMetadata = {}) 
   existingEpisodes.push({
     id: safeNum,
     url: animeMetadata.url || (history[storageKey] && history[storageKey].url) || '',
-    title: `Episodio ${safeNum}`,
+    title: `Episode ${safeNum}`,
     watchedAt: new Date().toISOString()
   });
 

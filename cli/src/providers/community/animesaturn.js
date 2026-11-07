@@ -200,7 +200,7 @@ function createAnimeSaturnProvider({ BaseAnimeProvider, cheerio, fetchHtml }) {
 
           episodes.push({
             id: String(epNum),
-            title: `Episodio ${epNum}`,
+            title: `Episode ${epNum}`,
             url: fullUrl
           });
         });
@@ -217,7 +217,7 @@ function createAnimeSaturnProvider({ BaseAnimeProvider, cheerio, fetchHtml }) {
             const fullUrl = watchPath.startsWith('http') ? watchPath : `${this.baseUrl}${watchPath}`;
             episodes.push({
               id: String(epNum),
-              title: `Episodio ${epNum}`,
+              title: `Episode ${epNum}`,
               url: fullUrl
             });
           });

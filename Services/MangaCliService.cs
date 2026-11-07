@@ -340,6 +340,86 @@ public class MangaCliService
         return "all";
     }
 
+    public static string NormalizeTitleForDedup(string? rawTitle)
+    {
+        if (string.IsNullOrWhiteSpace(rawTitle)) return "";
+        var t = Regex.Replace(rawTitle, @"\b(?:sub\s*ita|ita\s*doppiato|ita\s*dubbed|ita/sub\s*ita|sub/dub|ita|subita|sub|dub|raw|oav|movie|film|tv)\b", "", RegexOptions.IgnoreCase);
+        t = Regex.Replace(t, @"\b(?:english\s*sub|eng\s*sub|english|eng)\b", "", RegexOptions.IgnoreCase);
+        t = Regex.Replace(t, @"[()\[\]/\-_]", " ");
+        t = Regex.Replace(t, @"[^a-zA-Z0-9\s]", " ");
+        t = Regex.Replace(t, @"\s+", " ").Trim().ToLowerInvariant();
+        return t;
+    }
+
+    public static string CleanDisplayTitle(string? rawTitle)
+    {
+        if (string.IsNullOrWhiteSpace(rawTitle)) return "";
+        var t = Regex.Replace(rawTitle, @"\s*[(\[]\s*(?:sub\s*ita|ita\s*doppiato|ita\s*dubbed|ita/sub\s*ita|sub/dub|ita|subita|sub|dub|english\s*sub|eng|raw)\s*[)\]]", "", RegexOptions.IgnoreCase);
+        t = Regex.Replace(t, @"\s*-\s*(?:sub\s*ita|ita\s*doppiato|ita\s*dubbed|ita|sub|dub).*$", "", RegexOptions.IgnoreCase);
+        t = Regex.Replace(t, @"\s+(?:SUB\s*ITA|ITA\s*DUBBED|ITA/SUB\s*ITA|SUBITA|ITA)\b", "", RegexOptions.IgnoreCase);
+        return t.Trim();
+    }
+
+    public static List<MediaItem> DeduplicateMediaItems(List<MediaItem> items)
+    {
+        if (items == null || items.Count <= 1) return items ?? new List<MediaItem>();
+
+        var result = new List<MediaItem>();
+        var seen = new Dictionary<string, MediaItem>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var item in items)
+        {
+            var normTitle = NormalizeTitleForDedup(item.Title);
+            var key = normTitle.Length >= 3 ? $"{item.Type}:{normTitle}" : (item.Url ?? item.Id ?? item.Title);
+
+            if (!seen.TryGetValue(key, out var existing))
+            {
+                var cleanedTitle = CleanDisplayTitle(item.Title);
+                if (cleanedTitle.Length >= 2)
+                {
+                    item.Title = cleanedTitle;
+                }
+                seen[key] = item;
+                result.Add(item);
+            }
+            else
+            {
+                // Merge audio
+                var a1 = (existing.Audio ?? "").ToLowerInvariant().Trim();
+                var a2 = (item.Audio ?? "").ToLowerInvariant().Trim();
+                var hasSub = a1 == "both" || a1 == "sub" || a1 == "subita" || a1.Contains("sub") ||
+                             a2 == "both" || a2 == "sub" || a2 == "subita" || a2.Contains("sub");
+                var hasDub = a1 == "both" || a1 == "dub" || a1 == "ita" || a1.Contains("dub") || a1.Contains("ita") ||
+                             a2 == "both" || a2 == "dub" || a2 == "ita" || a2.Contains("dub") || a2.Contains("ita");
+
+                if (hasSub && hasDub)
+                {
+                    existing.Audio = "both";
+                }
+                else if (hasDub)
+                {
+                    existing.Audio = "dub";
+                }
+                else if (hasSub)
+                {
+                    existing.Audio = "sub";
+                }
+
+                if (string.IsNullOrWhiteSpace(existing.Image) && !string.IsNullOrWhiteSpace(item.Image))
+                {
+                    existing.Image = item.Image;
+                }
+
+                if (item.Count > existing.Count)
+                {
+                    existing.Count = item.Count;
+                }
+            }
+        }
+
+        return result;
+    }
+
     private static List<MediaItem> ParseJsonMediaItems(string output, string type)
     {
         var list = new List<MediaItem>();
@@ -410,7 +490,7 @@ public class MangaCliService
             // Fallback handled by caller
         }
 
-        return list;
+        return DeduplicateMediaItems(list);
     }
 
     private static List<string> ExtractPagesFromOutput(string output)
@@ -1240,29 +1320,25 @@ public class MangaCliService
     {
         _ = Task.Run(async () =>
         {
-            using var semaphore = new System.Threading.SemaphoreSlim(6);
-            var tasks = items.Select(async item =>
+            foreach (var item in items)
             {
-                await semaphore.WaitAsync();
-                try
+                if (string.IsNullOrWhiteSpace(item.Image))
                 {
-                    var cover = await CoverService.GetCoverAsync(item.Title, type);
-                    if (!string.IsNullOrWhiteSpace(cover))
+                    try
                     {
-                        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                        var cover = await CoverService.GetCoverAsync(item.Title, type);
+                        if (!string.IsNullOrWhiteSpace(cover))
                         {
-                            item.Image = cover;
-                        });
+                            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                            {
+                                item.Image = cover;
+                            });
+                        }
                     }
+                    catch {}
+                    await Task.Delay(150);
                 }
-                catch {}
-                finally
-                {
-                    semaphore.Release();
-                }
-            });
-
-            await Task.WhenAll(tasks);
+            }
         });
     }
 
@@ -1315,7 +1391,7 @@ public class MangaCliService
             }
         }
 
-        return list;
+        return DeduplicateMediaItems(list);
     }
 
     private static List<MediaItem> ParseSearchOutput(string output, string type)
@@ -1362,7 +1438,7 @@ public class MangaCliService
             }
         }
 
-        return list;
+        return DeduplicateMediaItems(list);
     }
 
     private static int? ExtractNumber(string? s)

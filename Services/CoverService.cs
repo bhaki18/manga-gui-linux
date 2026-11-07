@@ -16,6 +16,7 @@ public class CoverService
         Timeout = TimeSpan.FromSeconds(6) 
     };
     private static readonly ConcurrentDictionary<string, string> _memoryCache = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly System.Threading.SemaphoreSlim _coverLock = new(1, 1);
     private static readonly string _cacheFile;
 
     static CoverService()
@@ -86,33 +87,47 @@ public class CoverService
             return cached;
         }
 
-        // 1. Try Kitsu first (fast, generous limits, high quality posters)
-        var url = await QueryKitsuAsync(clean, type);
-
-        // If not found and title has subtitle (e.g. "Series: Subtitle"), try base title
-        if (string.IsNullOrWhiteSpace(url) && clean.Contains(':'))
+        await _coverLock.WaitAsync();
+        try
         {
-            var baseTitle = clean.Split(':')[0].Trim();
-            if (baseTitle.Length > 2)
+            if (_memoryCache.TryGetValue(cacheKey, out cached) && !string.IsNullOrWhiteSpace(cached))
             {
-                url = await QueryKitsuAsync(baseTitle, type);
+                return cached;
             }
-        }
 
-        // 2. Try AniList as fallback
-        if (string.IsNullOrWhiteSpace(url))
+            // 1. Try Kitsu first (fast, generous limits, high quality posters)
+            var url = await QueryKitsuAsync(clean, type);
+
+            // If not found and title has subtitle (e.g. "Series: Subtitle"), try base title
+            if (string.IsNullOrWhiteSpace(url) && clean.Contains(':'))
+            {
+                var baseTitle = clean.Split(':')[0].Trim();
+                if (baseTitle.Length > 2)
+                {
+                    url = await QueryKitsuAsync(baseTitle, type);
+                }
+            }
+
+            // 2. Try AniList as fallback
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                url = await QueryAniListAsync(clean, type);
+            }
+
+            if (!string.IsNullOrWhiteSpace(url))
+            {
+                _memoryCache[cacheKey] = url;
+                SaveDiskCache();
+                return url;
+            }
+
+            return null;
+        }
+        finally
         {
-            url = await QueryAniListAsync(clean, type);
+            await Task.Delay(150);
+            _coverLock.Release();
         }
-
-        if (!string.IsNullOrWhiteSpace(url))
-        {
-            _memoryCache[cacheKey] = url;
-            SaveDiskCache();
-            return url;
-        }
-
-        return null;
     }
 
     private static async Task<string?> QueryKitsuAsync(string cleanTitle, string type)

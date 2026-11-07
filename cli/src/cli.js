@@ -583,7 +583,7 @@ async function handleHistoryFlow(options) {
       });
 
       const latestItem = sortedItems[0];
-      const latestLabel = latestItem.title || (isAnime ? `Episodio ${latestItem.id}` : `Capitolo ${latestItem.id}`);
+      const latestLabel = latestItem.title || (isAnime ? `Episode ${latestItem.id}` : `Chapter ${latestItem.id}`);
 
       const unmarkMethod = await inquirer.prompt([
         {
@@ -593,8 +593,8 @@ async function handleHistoryFlow(options) {
           choices: [
             { name: `⏪ Unmark only latest (${latestLabel})`, value: 'latest' },
             { name: `🔢 Enter ${isAnime ? 'episode' : 'chapter'} number(s) directly (e.g. 10 or 5, 8, 12)`, value: 'by_number' },
-            { name: `📋 Select from checklist (Spunta gli elementi da rimuovere)`, value: 'checklist' },
-            { name: '↩️  Cancel (Annulla)', value: 'cancel' }
+            { name: `📋 Select from checklist`, value: 'checklist' },
+            { name: '↩️  Cancel', value: 'cancel' }
           ]
         }
       ]);
@@ -632,7 +632,7 @@ async function handleHistoryFlow(options) {
         console.log(chalk.green(`✔ Removed ${removedCount} ${isAnime ? 'episodes' : 'chapters'} from history.\n`));
       } else if (unmarkMethod.mode === 'checklist') {
         const unmarkChoices = sortedItems.map(e => ({
-          name: e.title || (isAnime ? `Episodio ${e.id}` : `Capitolo ${e.id}`),
+          name: e.title || (isAnime ? `Episode ${e.id}` : `Chapter ${e.id}`),
           value: e
         }));
 
@@ -707,10 +707,10 @@ async function handleCatalogCommand(options) {
   if (type === 'anime') typeDesc = 'Anime';
   if (type === 'manga') typeDesc = 'Manga';
 
-  const sourceDesc = options.source ? ` [Fonte: ${options.source}]` : ' [Tutte le fonti]';
-  const langDesc = options.lang ? ` [Lingua: ${options.lang.toUpperCase()}]` : '';
+  const sourceDesc = options.source ? ` [Source: ${options.source}]` : ' [All sources]';
+  const langDesc = options.lang ? ` [Language: ${options.lang.toUpperCase()}]` : '';
 
-  const spinner = ora(`Caricamento catalogo ${typeDesc}${sourceDesc}${langDesc}...`).start();
+  const spinner = ora(`Loading catalog ${typeDesc}${sourceDesc}${langDesc}...`).start();
 
   try {
     const catalog = await providerManager.getFullCatalog({
@@ -721,12 +721,12 @@ async function handleCatalogCommand(options) {
     });
     spinner.stop();
 
-    console.log(chalk.bold.cyan('\n📦 MANGA-CLI 2.0 - CATALOGO'));
+    console.log(chalk.bold.cyan('\n📦 MANGA-CLI 2.0 - CATALOG'));
     if (options.source) {
-      console.log(chalk.gray(`Filtro fonte: ${options.source}`));
+      console.log(chalk.gray(`Source filter: ${options.source}`));
     }
     if (options.lang) {
-      console.log(chalk.gray(`Filtro lingua: ${options.lang}`));
+      console.log(chalk.gray(`Language filter: ${options.lang}`));
     }
     console.log();
 
@@ -736,11 +736,11 @@ async function handleCatalogCommand(options) {
     // Manga section
     if (type === 'all' || type === 'manga') {
       console.log(chalk.bold.magenta(`═══════════════════════════════════════════════════════════`));
-      console.log(chalk.bold.magenta(`📖 CATALOGO MANGA (${mangaList.length} titoli)`));
+      console.log(chalk.bold.magenta(`📖 MANGA CATALOG (${mangaList.length} titles)`));
       console.log(chalk.bold.magenta(`═══════════════════════════════════════════════════════════`));
 
       if (mangaList.length === 0) {
-        console.log(chalk.yellow('  (Nessun manga trovato per i filtri selezionati)\n'));
+        console.log(chalk.yellow('  (No manga found for selected filters)\n'));
       } else {
         const grouped = {};
         for (const item of mangaList) {
@@ -764,11 +764,11 @@ async function handleCatalogCommand(options) {
     // Anime section
     if (type === 'all' || type === 'anime') {
       console.log(chalk.bold.cyan(`═══════════════════════════════════════════════════════════`));
-      console.log(chalk.bold.cyan(`🎬 CATALOGO ANIME (${animeList.length} titoli)`));
+      console.log(chalk.bold.cyan(`🎬 ANIME CATALOG (${animeList.length} titles)`));
       console.log(chalk.bold.cyan(`═══════════════════════════════════════════════════════════`));
 
       if (animeList.length === 0) {
-        console.log(chalk.yellow('  (Nessun anime trovato per i filtri selezionati)\n'));
+        console.log(chalk.yellow('  (No anime found for selected filters)\n'));
       } else {
         const grouped = {};
         for (const item of animeList) {
@@ -886,17 +886,17 @@ async function handleSourcesCommand(subAction, rawArgs, options) {
   if (act === 'explore' || act === 'browse' || act === 'store') {
     const catalog = providerManager.getCommunityCatalog();
     if (catalog.length === 0) {
-      console.log(chalk.yellow('\nℹ️ Nessuna estensione disponibile nel catalogo community al momento.\n'));
+      console.log(chalk.yellow('\nℹ️ No extensions available in the community catalog at this time.\n'));
       process.exit(0);
     }
 
     console.log(chalk.bold.cyan('\n🏪 Community Sources Store'));
-    console.log(chalk.dim('Seleziona le fonti che desideri installare con la barra spaziatrice e premi Invio:\n'));
+    console.log(chalk.dim('Select the sources you want to install using Spacebar and press Enter:\n'));
 
     const choices = catalog.map(item => {
       const flag = item.languages.includes('it') ? '🇮🇹' : '🌍';
       const typeBadge = item.type === 'anime' ? chalk.magenta('[Anime]') : chalk.blue('[Manga]');
-      const statusBadge = item.isInstalled ? chalk.green(' (Installato ✓)') : '';
+      const statusBadge = item.isInstalled ? chalk.green(' (Installed ✓)') : '';
 
       return {
         name: `${flag} ${typeBadge} ${chalk.bold(item.name)} - ${chalk.dim(item.description)}${statusBadge}`,
@@ -909,13 +909,13 @@ async function handleSourcesCommand(subAction, rawArgs, options) {
       {
         type: 'checkbox',
         name: 'selected',
-        message: 'Fonti disponibili:',
+        message: 'Available sources:',
         choices
       }
     ]);
 
     if (!answer.selected || answer.selected.length === 0) {
-      console.log(chalk.yellow('\nNessuna fonte selezionata.\n'));
+      console.log(chalk.yellow('\nNo sources selected.\n'));
       process.exit(0);
     }
 
@@ -923,12 +923,12 @@ async function handleSourcesCommand(subAction, rawArgs, options) {
     for (const id of answer.selected) {
       try {
         const res = providerManager.installCommunitySource(id);
-        console.log(chalk.green(`✔ Installata con successo: ${chalk.bold(res.entry.name)} (${res.entry.id})`));
+        console.log(chalk.green(`✔ Successfully installed: ${chalk.bold(res.entry.name)} (${res.entry.id})`));
       } catch (err) {
-        console.log(chalk.red(`❌ Errore durante l'installazione di ${id}: ${err.message}`));
+        console.log(chalk.red(`❌ Error installing ${id}: ${err.message}`));
       }
     }
-    console.log(chalk.cyan(`\n✨ Fonti pronte all'uso! Prova una ricerca con: manga-cli "titolo"\n`));
+    console.log(chalk.cyan(`\n✨ Sources ready to use! Try a search with: manga-cli "title"\n`));
     process.exit(0);
   }
 
@@ -938,39 +938,39 @@ async function handleSourcesCommand(subAction, rawArgs, options) {
       return handleSourcesCommand('explore', [], options);
     }
 
-    // Se è un file locale o un URL web
+    // If local file or web URL
     if (target.endsWith('.js') || target.startsWith('http://') || target.startsWith('https://') || target.includes('/') || target.includes('\\')) {
       try {
         const { targetPath, filename } = providerManager.addProviderFromFileOrUrl(target);
-        console.log(chalk.green(`\n✔ Fonte installata con successo: ${chalk.bold(filename)}`));
-        console.log(chalk.dim(`   Posizione: ${targetPath}\n`));
+        console.log(chalk.green(`\n✔ Source installed successfully: ${chalk.bold(filename)}`));
+        console.log(chalk.dim(`   Location: ${targetPath}\n`));
       } catch (err) {
-        console.log(chalk.red(`\n❌ Impossibile installare la fonte: ${err.message}\n`));
+        console.log(chalk.red(`\n❌ Failed to install source: ${err.message}\n`));
       }
       process.exit(0);
     }
 
-    // Altrimenti cerca per ID o nome nel catalogo community
+    // Otherwise search by ID or name in community catalog
     try {
       const res = providerManager.installCommunitySource(target);
-      console.log(chalk.green(`\n✔ Fonte community installata con successo: ${chalk.bold(res.entry.name)}`));
-      console.log(chalk.cyan(`   ID: ${res.entry.id} | Tipo: ${res.entry.type.toUpperCase()} | Lingue: ${res.entry.languages.join(', ').toUpperCase()}`));
+      console.log(chalk.green(`\n✔ Community source installed successfully: ${chalk.bold(res.entry.name)}`));
+      console.log(chalk.cyan(`   ID: ${res.entry.id} | Type: ${res.entry.type.toUpperCase()} | Languages: ${res.entry.languages.join(', ').toUpperCase()}`));
       console.log(chalk.dim(`   ${res.entry.description}\n`));
     } catch (err) {
-      console.log(chalk.red(`\n❌ Fonte "${target}" non trovata nel catalogo community.`));
-      console.log(chalk.dim(`   Usa 'manga-cli sources explore' per sfogliare tutte le fonti disponibili.\n`));
+      console.log(chalk.red(`\n❌ Source "${target}" not found in community catalog.`));
+      console.log(chalk.dim(`   Use 'manga-cli sources explore' to browse all available sources.\n`));
     }
     process.exit(0);
   }
 
   if (act === 'update') {
-    console.log(chalk.cyan('\n🔄 Verifica aggiornamenti fonti community...'));
+    console.log(chalk.cyan('\n🔄 Checking for community source updates...'));
     const updated = providerManager.updateCommunitySources();
     if (updated.length > 0) {
-      console.log(chalk.green(`✔ Aggiornate ${updated.length} fonti all'ultima versione:`));
+      console.log(chalk.green(`✔ Updated ${updated.length} sources to latest version:`));
       updated.forEach(u => console.log(`  • ${chalk.bold(u.name)} (v${u.version})`));
     } else {
-      console.log(chalk.green('✔ Tutte le fonti installate sono già aggiornate all\'ultima versione.'));
+      console.log(chalk.green('✔ All installed sources are up to date.'));
     }
     console.log('');
     process.exit(0);

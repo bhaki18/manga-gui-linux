@@ -164,7 +164,7 @@ function createMangaWorldProvider({ BaseMangaProvider, cheerio, fetchHtml }) {
           chapters.push({
             id: chapNum || cleanHref.split('/').pop(),
             number: chapNum,
-            title: `[IT] ${spanText || (chapNum ? `Capitolo ${chapNum}` : rawTitle)}`,
+            title: `[IT] ${spanText || (chapNum ? `Chapter ${chapNum}` : rawTitle)}`,
             url: cleanHref.startsWith('http') ? cleanHref : `${this.baseUrl}${cleanHref}`
           });
         });

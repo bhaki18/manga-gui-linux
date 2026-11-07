@@ -42,7 +42,7 @@ public partial class MainViewModel : ViewModelBase
     public string AppVersionText => $"manga-gui {InstalledVersionText}";
     public bool HasUpdateNotes => !string.IsNullOrWhiteSpace(UpdateNotesText);
     public bool HasUpdateProgress => !string.IsNullOrWhiteSpace(UpdateProgressLog);
-    public string UpdateConfirmButtonText => IsUpdating ? "⏳ Aggiornamento in corso..." : "⚡ Aggiorna Ora";
+    public string UpdateConfirmButtonText => IsUpdating ? "⏳ Updating..." : "⚡ Update Now";
 
     [ObservableProperty]
     private string _activeTab = "Anime";
@@ -188,25 +188,25 @@ public partial class MainViewModel : ViewModelBase
         "Shounen",
         "Seinen",
         "Isekai",
-        "Action (Azione)",
-        "Adventure (Avventura)",
+        "Action",
+        "Adventure",
         "Fantasy",
-        "Comedy (Commedia)",
-        "Romance (Romantico)",
-        "Drama (Drammatico)",
-        "Sci-Fi (Fantascienza)",
+        "Comedy",
+        "Romance",
+        "Drama",
+        "Sci-Fi",
         "Horror",
-        "Mystery (Mistero)",
-        "Supernatural (Soprannaturale)",
+        "Mystery",
+        "Supernatural",
         "Slice of Life",
-        "Sports (Sport)",
-        "Psychological (Psicologico)",
+        "Sports",
+        "Psychological",
         "Thriller",
         "Ecchi",
         "Mecha",
-        "Martial Arts (Arti Marziali)",
-        "School (Scolastico)",
-        "Historical (Storico)",
+        "Martial Arts",
+        "School",
+        "Historical",
         "Shoujo"
     };
 
@@ -216,23 +216,23 @@ public partial class MainViewModel : ViewModelBase
         "Shounen",
         "Isekai",
         "Seinen",
-        "Action (Azione)",
+        "Action",
         "Fantasy",
-        "Comedy (Commedia)",
-        "Romance (Romantico)",
+        "Comedy",
+        "Romance",
         "Horror",
-        "Mystery (Mistero)",
-        "Sports (Sport)",
-        "Psychological (Psicologico)",
+        "Mystery",
+        "Sports",
+        "Psychological",
         "Slice of Life",
-        "Sci-Fi (Fantascienza)"
+        "Sci-Fi"
     };
 
     public ObservableCollection<string> AudioFilters { get; } = new()
     {
         "All Audio (Sub & Dub)",
-        "Sub (Subtitled / Sottotitolato)",
-        "Dub (Dubbed / Doppiato)"
+        "Sub (Subtitled)",
+        "Dub (Dubbed)"
     };
 
     private static (string allOption, string subOption, string dubOption, string quickSubText, string quickDubText) GetAudioOptionsForLanguage(string? selectedLanguage)
@@ -242,17 +242,17 @@ public partial class MainViewModel : ViewModelBase
         {
             return (
                 "All Audio (Sub & Dub)",
-                "Sub (Subtitled / Sottotitolato)",
-                "Dub (Dubbed / Doppiato)",
-                "💬 Solo Sub",
-                "🎙️ Solo Dub"
+                "Sub (Subtitled)",
+                "Dub (Dubbed)",
+                "💬 Sub Only",
+                "🎙️ Dub Only"
             );
         }
 
         var upper = code.ToUpperInvariant();
         var (flag, subDesc, dubDesc) = code switch
         {
-            "it" => ("🇮🇹", "Sottotitolato", "Doppiato"),
+            "it" => ("🇮🇹", "Subtitled", "Dubbed"),
             "en" => ("🇬🇧", "Subtitled", "Dubbed"),
             "es" => ("🇪🇸", "Subtitulado", "Doblado"),
             "fr" => ("🇫🇷", "Sous-titré", "Doublé"),
@@ -274,8 +274,8 @@ public partial class MainViewModel : ViewModelBase
             $"All Audio (Sub & Dub - {upper})",
             $"Sub {upper} ({subDesc})",
             $"Dub {upper} ({dubDesc})",
-            $"{flag} Solo Sub {upper}",
-            $"{flag} Solo Dub {upper}"
+            $"{flag} Sub Only ({upper})",
+            $"{flag} Dub Only ({upper})"
         );
     }
 
@@ -442,8 +442,8 @@ public partial class MainViewModel : ViewModelBase
     {
         if (IsUpdating || _latestUpdateCheck == null) return;
         IsUpdating = true;
-        UpdateProgressLog = "Avvio procedura di aggiornamento automatico...";
-        StatusText = $"Aggiornamento a v{_latestUpdateCheck.RemoteVersion} in corso...";
+        UpdateProgressLog = "Starting automatic update...";
+        StatusText = $"Updating to v{_latestUpdateCheck.RemoteVersion} in progress...";
 
         try
         {
@@ -737,11 +737,79 @@ public partial class MainViewModel : ViewModelBase
 
     partial void OnSelectedItemChanged(MediaItem? value)
     {
+        if (value != null && value.Type.ToLower() == "anime")
+        {
+            if (value.HasDub && !value.HasSub)
+            {
+                SelectedItemAudio = "dub";
+            }
+            else if (value.HasSub && !value.HasDub)
+            {
+                SelectedItemAudio = "sub";
+            }
+            else if (SelectedItemAudio == "dub" && !value.HasDub)
+            {
+                SelectedItemAudio = "sub";
+            }
+            else if (SelectedItemAudio == "sub" && !value.HasSub)
+            {
+                SelectedItemAudio = "dub";
+            }
+        }
+
+        OnPropertyChanged(nameof(SelectedItemAudio));
+        OnPropertyChanged(nameof(CanSelectSub));
+        OnPropertyChanged(nameof(CanSelectDub));
+        OnPropertyChanged(nameof(IsAudioSelectorVisible));
+        OnPropertyChanged(nameof(SubOptionBackground));
+        OnPropertyChanged(nameof(DubOptionBackground));
+        OnPropertyChanged(nameof(SubOptionForeground));
+        OnPropertyChanged(nameof(DubOptionForeground));
         OnPropertyChanged(nameof(ActionButtonText));
         OnPropertyChanged(nameof(NumberLabel));
         OnPropertyChanged(nameof(IsCurrentNumberWatched));
         OnPropertyChanged(nameof(WatchedStatusBadge));
         OnPropertyChanged(nameof(UnmarkButtonText));
+    }
+
+    [ObservableProperty]
+    private string _selectedItemAudio = "sub";
+
+    public bool CanSelectSub => SelectedItem?.Type?.ToLower() == "anime" && SelectedItem.HasSub;
+    public bool CanSelectDub => SelectedItem?.Type?.ToLower() == "anime" && SelectedItem.HasDub;
+    public bool IsAudioSelectorVisible => SelectedItem?.Type?.ToLower() == "anime" && !SelectedItem.IsDownloaded;
+
+    public string SubOptionBackground => SelectedItemAudio == "sub" ? "#0066CC" : "#1E1F26";
+    public string DubOptionBackground => SelectedItemAudio == "dub" ? "#1B8A44" : "#1E1F26";
+    public string SubOptionForeground => SelectedItemAudio == "sub" ? "#FFFFFF" : (CanSelectSub ? "#CCCCCC" : "#555555");
+    public string DubOptionForeground => SelectedItemAudio == "dub" ? "#FFFFFF" : (CanSelectDub ? "#CCCCCC" : "#555555");
+
+    [RelayCommand]
+    public void ChooseSubAudio()
+    {
+        if (CanSelectSub)
+        {
+            SelectedItemAudio = "sub";
+            OnPropertyChanged(nameof(SelectedItemAudio));
+            OnPropertyChanged(nameof(SubOptionBackground));
+            OnPropertyChanged(nameof(DubOptionBackground));
+            OnPropertyChanged(nameof(SubOptionForeground));
+            OnPropertyChanged(nameof(DubOptionForeground));
+        }
+    }
+
+    [RelayCommand]
+    public void ChooseDubAudio()
+    {
+        if (CanSelectDub)
+        {
+            SelectedItemAudio = "dub";
+            OnPropertyChanged(nameof(SelectedItemAudio));
+            OnPropertyChanged(nameof(SubOptionBackground));
+            OnPropertyChanged(nameof(DubOptionBackground));
+            OnPropertyChanged(nameof(SubOptionForeground));
+            OnPropertyChanged(nameof(DubOptionForeground));
+        }
     }
 
     [RelayCommand]
@@ -902,6 +970,7 @@ public partial class MainViewModel : ViewModelBase
         try
         {
             DownloadProgressText = string.Empty;
+            var audioToUse = SelectedItem.Type.ToLower() == "anime" ? SelectedItemAudio : SelectedAudioFilter;
             var (success, msg, dest) = await _cliService.DownloadMediaAsync(SelectedItem, num, (string prog) =>
             {
                 Avalonia.Threading.Dispatcher.UIThread.Post(() =>
@@ -910,7 +979,7 @@ public partial class MainViewModel : ViewModelBase
                     StatusText = $"Downloading {title} ({unit} {num}): {prog}";
                     OnPropertyChanged(nameof(DownloadButtonText));
                 });
-            }, SelectedLanguage, SelectedAudioFilter);
+            }, SelectedLanguage, audioToUse);
             StatusText = msg;
             if (success && (ActiveTab == "Downloaded" || ActiveTab == "Downloads"))
             {
@@ -1293,7 +1362,7 @@ public partial class MainViewModel : ViewModelBase
         if (SelectedItem.Type.ToLower() == "anime")
         {
             StatusText = $"Loading stream for {SelectedItem.Title} (Episode {num})...";
-            var (success, msg) = await _cliService.PlayStreamAsync(SelectedItem, num, SelectedAudioFilter);
+            var (success, msg) = await _cliService.PlayStreamAsync(SelectedItem, num, SelectedItemAudio);
             StatusText = msg;
         }
         else

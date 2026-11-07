@@ -305,7 +305,7 @@ function createAnimeUnityProvider({ BaseAnimeProvider, cheerio, fetchHtml, fetch
 
           episodes.push({
             id: epNum,
-            title: `Episodio ${epNum}`,
+            title: `Episode ${epNum}`,
             url: `${this.baseUrl}/embed-url/${ep.id}`
           });
         }

@@ -162,6 +162,26 @@ public partial class MediaItem : ObservableObject
         _ => !string.IsNullOrWhiteSpace(Language) ? $"{Type.ToUpper()} • {Language.ToUpperInvariant()}" : Type.ToUpper()
     };
 
+    public bool HasSub
+    {
+        get
+        {
+            if (Type?.ToLower() != "anime") return false;
+            var a = Audio?.ToLowerInvariant().Trim();
+            return string.IsNullOrEmpty(a) || a == "both" || a == "sub" || a == "subita" || a.Contains("sub");
+        }
+    }
+
+    public bool HasDub
+    {
+        get
+        {
+            if (Type?.ToLower() != "anime") return false;
+            var a = Audio?.ToLowerInvariant().Trim();
+            return !string.IsNullOrEmpty(a) && (a == "both" || a == "dub" || a == "ita" || a.Contains("dub") || a.Contains("ita"));
+        }
+    }
+
     public string SourceLabel => !string.IsNullOrWhiteSpace(SourceName) ? SourceName : Source;
 
     public string TypeIcon => Type.ToLower() == "anime" ? "🎬" : "📖";

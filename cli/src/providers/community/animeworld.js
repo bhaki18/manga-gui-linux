@@ -182,7 +182,7 @@ function createAnimeWorldProvider({ BaseAnimeProvider, cheerio, fetchHtml, getCu
             seenNums.add(epNum);
             episodes.push({
               id: epNum,
-              title: `Episodio ${epNum}`,
+              title: `Episode ${epNum}`,
               url: href.startsWith('http') ? href : `${this.baseUrl}${href}`,
               dataId
             });

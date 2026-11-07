@@ -183,17 +183,88 @@ class ProviderManager {
     return false;
   }
 
+  normalizeTitleForDedup(rawTitle) {
+    if (!rawTitle) return '';
+    return String(rawTitle)
+      .replace(/\b(?:sub\s*ita|ita\s*doppiato|ita\s*dubbed|ita\/sub\s*ita|sub\/dub|ita|subita|sub|dub|raw|oav|movie|film|tv)\b/gi, '')
+      .replace(/\b(?:english\s*sub|eng\s*sub|english|eng)\b/gi, '')
+      .replace(/[\(\)\[\]\/\-_]/g, ' ')
+      .replace(/[^a-zA-Z0-9\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toLowerCase();
+  }
+
+  cleanDisplayTitle(rawTitle) {
+    if (!rawTitle) return '';
+    return String(rawTitle)
+      .replace(/\s*[\(\[]\s*(?:sub\s*ita|ita\s*doppiato|ita\s*dubbed|ita\/sub\s*ita|sub\/dub|ita|subita|sub|dub|english\s*sub|eng|raw)\s*[\)\]]/gi, '')
+      .replace(/\s*-\s*(?:sub\s*ita|ita\s*doppiato|ita\s*dubbed|ita|sub|dub).*$/gi, '')
+      .replace(/\s+(?:SUB\s*ITA|ITA\s*DUBBED|ITA\/SUB\s*ITA|SUBITA|ITA)\b/gi, '')
+      .trim();
+  }
+
+  addOrMergeItem(result, seen, item) {
+    if (!item || !item.title) return;
+    const norm = this.normalizeTitleForDedup(item.title);
+    const key = norm.length >= 3 ? `${item.type || 'media'}:${norm}` : (item.url || item.id || item.title);
+
+    if (!seen.has(key)) {
+      const cleaned = { ...item };
+      const cleanedTitle = this.cleanDisplayTitle(cleaned.title);
+      if (cleanedTitle.length >= 2) {
+        cleaned.title = cleanedTitle;
+      }
+      seen.set(key, cleaned);
+      result.push(cleaned);
+    } else {
+      const existing = seen.get(key);
+      const a1 = String(existing.audio || '').toLowerCase().trim();
+      const a2 = String(item.audio || '').toLowerCase().trim();
+      const hasSub = a1 === 'both' || a1 === 'sub' || a1 === 'subita' || a1.includes('sub') ||
+                     a2 === 'both' || a2 === 'sub' || a2 === 'subita' || a2.includes('sub');
+      const hasDub = a1 === 'both' || a1 === 'dub' || a1 === 'ita' || a1.includes('dub') || a1.includes('ita') ||
+                     a2 === 'both' || a2 === 'dub' || a2 === 'ita' || a2.includes('dub') || a2.includes('ita');
+
+      if (hasSub && hasDub) {
+        existing.audio = 'both';
+      } else if (hasDub) {
+        existing.audio = 'dub';
+      } else if (hasSub) {
+        existing.audio = 'sub';
+      }
+
+      if (!existing.image && item.image) {
+        existing.image = item.image;
+      }
+      if (item.count && (!existing.count || item.count > existing.count)) {
+        existing.count = item.count;
+      }
+    }
+  }
+
+  deduplicateItems(arr) {
+    if (!Array.isArray(arr)) return [];
+    const result = [];
+    const seen = new Map();
+    for (const item of arr) {
+      this.addOrMergeItem(result, seen, item);
+    }
+    return result;
+  }
+
   interleaveArrays(arrays) {
     const valid = arrays.filter(a => Array.isArray(a) && a.length > 0);
     if (valid.length === 0) return [];
-    if (valid.length === 1) return valid[0];
+    if (valid.length === 1) return this.deduplicateItems(valid[0]);
 
     const result = [];
+    const seen = new Map();
     const maxLen = Math.max(...valid.map(a => a.length));
     for (let i = 0; i < maxLen; i++) {
       for (const arr of valid) {
         if (i < arr.length) {
-          result.push(arr[i]);
+          this.addOrMergeItem(result, seen, arr[i]);
         }
       }
     }

@@ -54,7 +54,7 @@ class OnePiecePowerAnimeProvider extends BaseProvider {
     });
     list.push({
       id: 'onepiece-ita',
-      title: 'One Piece (ITA Doppiato)',
+      title: 'One Piece (ITA Dubbed)',
       url: `${this.baseUrl}/anime18/onepiece/ita3/lista-episodi`,
       language: 'it',
       audio: 'ita',
@@ -237,7 +237,7 @@ class OnePiecePowerAnimeProvider extends BaseProvider {
         const epNum = epMatch ? epMatch[1] : '';
 
         if (!title && epNum) {
-          title = `Episodio ${parseInt(epNum, 10)}`;
+          title = `Episode ${parseInt(epNum, 10)}`;
         }
 
         episodes.push({
@@ -259,7 +259,7 @@ class OnePiecePowerAnimeProvider extends BaseProvider {
         const epMatch = fullUrl.match(/pagine\/(?:[^\/]+\/)?(\d+)/);
         const epNum = epMatch ? epMatch[1] : '';
         if (!title && epNum) {
-          title = `Episodio ${parseInt(epNum, 10)}`;
+          title = `Episode ${parseInt(epNum, 10)}`;
         }
         episodes.push({
           id: epNum || fullUrl,
