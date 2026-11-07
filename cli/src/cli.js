@@ -62,8 +62,8 @@ program
   .option('-l, --lang <language>', 'Filter by scan/catalog language code (e.g. it, en, es, fr, ja)', null)
   .option('--genre <genre>', 'Filter by genre/style (e.g. action, shounen, seinen, isekai, fantasy, romance, horror)', null)
   .option('--audio <audio>', 'Filter anime by audio track (all, subita, ita)', null)
-  .option('--dub', 'Prefer Italian dubbed audio (ITA) for anime')
-  .option('--sub', 'Prefer Italian subtitled audio (SUB ITA) for anime')
+  .option('--dub', 'Prefer dubbed audio (DUB) for anime')
+  .option('--sub', 'Prefer subtitled audio (SUB) for anime')
   // Direct selection
   .option('-e, --episode <number>', 'Direct episode number to stream or download')
   .option('-C, --chapter <number>', 'Direct chapter number to read or download')
