@@ -1,7 +1,7 @@
 # Maintainer: bhaki18 <https://github.com/bhaki18>
 pkgname=manga-gui-bin
-pkgver=1.1.6
-pkgrel=5
+pkgver=1.2.7
+pkgrel=1
 pkgdesc="Modern desktop client to stream anime and read manga with MPV integration and offline downloads"
 arch=('x86_64')
 url="https://github.com/bhaki18/manga-gui-linux"
