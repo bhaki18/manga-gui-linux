@@ -221,10 +221,10 @@ class ProviderManager {
       const existing = seen.get(key);
       const a1 = String(existing.audio || '').toLowerCase().trim();
       const a2 = String(item.audio || '').toLowerCase().trim();
-      const hasSub = a1 === 'both' || a1 === 'sub' || a1 === 'subita' || a1.includes('sub') ||
-                     a2 === 'both' || a2 === 'sub' || a2 === 'subita' || a2.includes('sub');
-      const hasDub = a1 === 'both' || a1 === 'dub' || a1 === 'ita' || a1.includes('dub') || a1.includes('ita') ||
-                     a2 === 'both' || a2 === 'dub' || a2 === 'ita' || a2.includes('dub') || a2.includes('ita');
+      const checkSub = (a) => !a || a === 'both' || a.includes('both') || a.includes('ita/sub') || a.includes('sub/dub') || a === 'sub' || a === 'subita' || a.includes('sub');
+      const checkDub = (a) => !!a && (a === 'both' || a.includes('both') || a.includes('ita/sub') || a.includes('sub/dub') || a === 'dub' || a === 'ita' || a.includes('dub') || a.includes('doppiato') || (a.includes('ita') && !a.includes('sub')));
+      const hasSub = checkSub(a1) || checkSub(a2);
+      const hasDub = checkDub(a1) || checkDub(a2);
 
       if (hasSub && hasDub) {
         existing.audio = 'both';

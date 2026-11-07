@@ -348,10 +348,10 @@ program
               name: 'mode',
               message: 'What would you like to do?',
               choices: [
-                { name: '📖 Read Manga (Leggi Manga)', value: 'manga' },
-                { name: '🎬 Watch Anime (Guarda Anime)', value: 'anime' },
-                { name: '📜 View Reading / Watch History (Cronologia)', value: 'history' },
-                { name: '🎲 Pick Random Manga or Anime (Casuale)', value: 'random' }
+                { name: '📖 Read Manga', value: 'manga' },
+                { name: '🎬 Watch Anime', value: 'anime' },
+                { name: '📜 View Reading / Watch History', value: 'history' },
+                { name: '🎲 Pick Random Manga or Anime', value: 'random' }
               ]
             }
           ]);
@@ -428,8 +428,8 @@ async function handleHistoryFlow(options) {
       };
     });
     historyChoices.push(new inquirer.Separator('── Actions ──'));
-    historyChoices.push({ name: '🗑️  Clear All History (Svuota tutta la cronologia)', value: '__clear_all__' });
-    historyChoices.push({ name: '🚪 Exit (Esci)', value: '__exit__' });
+    historyChoices.push({ name: '🗑️  Clear All History', value: '__clear_all__' });
+    historyChoices.push({ name: '🚪 Exit', value: '__exit__' });
 
     const choice = await inquirer.prompt([
       {
@@ -480,12 +480,12 @@ async function handleHistoryFlow(options) {
         name: 'action',
         message: `What would you like to do with "${item.title}"?`,
         choices: [
-          { name: `▶️  Resume ${isAnime ? 'watching' : 'reading'} (Riprendi)`, value: 'resume' },
-          { name: `✏️  Set last ${isAnime ? 'episode' : 'chapter'} number (Imposta progresso)`, value: 'set_progress' },
+          { name: `▶️  Resume ${isAnime ? 'watching' : 'reading'}`, value: 'resume' },
+          { name: `✏️  Set last ${isAnime ? 'episode' : 'chapter'} number`, value: 'set_progress' },
           { name: `✅ Mark all ${isAnime ? 'episodes' : 'chapters'} up to number N as ${isAnime ? 'watched' : 'read'}`, value: 'mark_range' },
-          { name: `❌ Unmark specific ${isAnime ? 'episodes' : 'chapters'} (Deseleziona singoli)`, value: 'unmark_items' },
-          { name: `🗑️  Remove this title from history (Elimina dalla cronologia)`, value: 'remove_title' },
-          { name: `↩️  Back to history list (Torna indietro)`, value: 'back' }
+          { name: `❌ Unmark specific ${isAnime ? 'episodes' : 'chapters'}`, value: 'unmark_items' },
+          { name: `🗑️  Remove this title from history`, value: 'remove_title' },
+          { name: `↩️  Back to history list`, value: 'back' }
         ]
       }
     ]);

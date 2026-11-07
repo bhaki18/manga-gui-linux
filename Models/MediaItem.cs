@@ -168,7 +168,9 @@ public partial class MediaItem : ObservableObject
         {
             if (Type?.ToLower() != "anime") return false;
             var a = Audio?.ToLowerInvariant().Trim();
-            return string.IsNullOrEmpty(a) || a == "both" || a == "sub" || a == "subita" || a.Contains("sub");
+            if (string.IsNullOrEmpty(a)) return true;
+            if (a == "both" || a.Contains("both") || a.Contains("ita/sub") || a.Contains("sub/dub")) return true;
+            return a == "sub" || a == "subita" || a.Contains("sub");
         }
     }
 
@@ -178,7 +180,10 @@ public partial class MediaItem : ObservableObject
         {
             if (Type?.ToLower() != "anime") return false;
             var a = Audio?.ToLowerInvariant().Trim();
-            return !string.IsNullOrEmpty(a) && (a == "both" || a == "dub" || a == "ita" || a.Contains("dub") || a.Contains("ita"));
+            if (string.IsNullOrEmpty(a)) return false;
+            if (a == "both" || a.Contains("both") || a.Contains("ita/sub") || a.Contains("sub/dub")) return true;
+            if (a == "dub" || a == "ita" || a.Contains("dub") || a.Contains("doppiato")) return true;
+            return a.Contains("ita") && !a.Contains("sub");
         }
     }
 

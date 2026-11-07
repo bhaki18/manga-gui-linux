@@ -387,10 +387,11 @@ public class MangaCliService
                 // Merge audio
                 var a1 = (existing.Audio ?? "").ToLowerInvariant().Trim();
                 var a2 = (item.Audio ?? "").ToLowerInvariant().Trim();
-                var hasSub = a1 == "both" || a1 == "sub" || a1 == "subita" || a1.Contains("sub") ||
-                             a2 == "both" || a2 == "sub" || a2 == "subita" || a2.Contains("sub");
-                var hasDub = a1 == "both" || a1 == "dub" || a1 == "ita" || a1.Contains("dub") || a1.Contains("ita") ||
-                             a2 == "both" || a2 == "dub" || a2 == "ita" || a2.Contains("dub") || a2.Contains("ita");
+                bool CheckSub(string a) => string.IsNullOrEmpty(a) || a == "both" || a.Contains("both") || a.Contains("ita/sub") || a.Contains("sub/dub") || a == "sub" || a == "subita" || a.Contains("sub");
+                bool CheckDub(string a) => !string.IsNullOrEmpty(a) && (a == "both" || a.Contains("both") || a.Contains("ita/sub") || a.Contains("sub/dub") || a == "dub" || a == "ita" || a.Contains("dub") || a.Contains("doppiato") || (a.Contains("ita") && !a.Contains("sub")));
+
+                var hasSub = CheckSub(a1) || CheckSub(a2);
+                var hasDub = CheckDub(a1) || CheckDub(a2);
 
                 if (hasSub && hasDub)
                 {

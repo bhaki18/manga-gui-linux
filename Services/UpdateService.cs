@@ -273,7 +273,7 @@ public class UpdateService
         }
         else
         {
-            result.ErrorMessage = "Impossibile contattare il server degli aggiornamenti.";
+            result.ErrorMessage = "Unable to contact update server.";
         }
 
         return result;
@@ -437,11 +437,11 @@ public class UpdateService
             sb.AppendLine("fi");
             sb.AppendLine("");
             sb.AppendLine("if [ \"$UPDATED\" = \"true\" ]; then");
-            sb.AppendLine("  echo \"[STEP 3/3] Riavvio di Manga GUI aggiornato...\"");
+            sb.AppendLine("  echo \"[STEP 3/3] Restarting updated Manga GUI...\"");
             sb.AppendLine("  (nohup /usr/bin/manga-gui >/dev/null 2>&1 || nohup \"$HOME/.local/bin/manga-gui\" >/dev/null 2>&1 || nohup \"$HOME/.local/lib/manga-gui/MangaGui\" >/dev/null 2>&1) &");
             sb.AppendLine("  exit 0");
             sb.AppendLine("else");
-            sb.AppendLine("  echo \"Errore: impossibile completare l'aggiornamento automatico.\"");
+            sb.AppendLine("  echo \"Error: unable to complete automatic update.\"");
             sb.AppendLine("  exit 1");
             sb.AppendLine("fi");
 
@@ -695,7 +695,7 @@ public class UpdateService
         }
         catch (Exception ex)
         {
-            return (false, $"Errore durante l'aggiornamento Windows: {ex.Message}");
+            return (false, $"Error during Windows update: {ex.Message}");
         }
     }
 }

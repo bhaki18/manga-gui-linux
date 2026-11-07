@@ -394,7 +394,7 @@ public partial class MainViewModel : ViewModelBase
         {
             if (isManual)
             {
-                StatusText = "Controllo aggiornamenti online in corso...";
+                StatusText = "Checking for online updates...";
             }
 
             var check = await _updateService.CheckForUpdateAsync();
@@ -407,17 +407,17 @@ public partial class MainViewModel : ViewModelBase
                 UpdateNotesText = check.ReleaseNotes;
                 UpdateProgressLog = string.Empty;
                 IsUpdateDialogVisible = true;
-                StatusText = $"🚀 Nuova versione disponibile: v{check.RemoteVersion} (installata: v{check.InstalledVersion})";
+                StatusText = $"🚀 New version available: v{check.RemoteVersion} (installed: v{check.InstalledVersion})";
             }
             else if (isManual)
             {
                 if (check.CheckSucceeded)
                 {
-                    StatusText = $"✔ Nessun aggiornamento necessario: hai già l'ultima versione installata (v{check.InstalledVersion}).";
+                    StatusText = $"✔ Up to date: you already have the latest version installed (v{check.InstalledVersion}).";
                 }
                 else
                 {
-                    StatusText = $"⚠️ {check.ErrorMessage ?? "Impossibile verificare gli aggiornamenti online."}";
+                    StatusText = $"⚠️ {check.ErrorMessage ?? "Unable to check for updates online."}";
                 }
             }
         }
@@ -425,7 +425,7 @@ public partial class MainViewModel : ViewModelBase
         {
             if (isManual)
             {
-                StatusText = $"Errore controllo aggiornamenti: {ex.Message}";
+                StatusText = $"Update check error: {ex.Message}";
             }
         }
     }
@@ -464,8 +464,8 @@ public partial class MainViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            UpdateProgressLog = $"❌ Errore: {ex.Message}";
-            StatusText = $"❌ Errore aggiornamento: {ex.Message}";
+            UpdateProgressLog = $"❌ Error: {ex.Message}";
+            StatusText = $"❌ Update error: {ex.Message}";
         }
         finally
         {
