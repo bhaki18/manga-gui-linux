@@ -62,11 +62,14 @@ function createAnimeSaturnProvider({ BaseAnimeProvider, cheerio, fetchHtml }) {
           title.toLowerCase().includes('(ita)') ||
           href.toLowerCase().includes('-ita-') ||
           cardText.includes('DUB');
+        const rawImg = img.attr('src') || img.attr('data-src') || '';
+        const image = rawImg ? (rawImg.startsWith('http') ? rawImg : `${this.baseUrl}${rawImg}`) : '';
 
         results.push({
           id: href,
           title,
           url: fullUrl,
+          image,
           audio: isIta ? 'ita' : 'subita',
           language: 'it',
           source: 'animesaturn',

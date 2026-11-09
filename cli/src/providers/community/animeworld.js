@@ -40,10 +40,14 @@ function createAnimeWorldProvider({ BaseAnimeProvider, cheerio, fetchHtml, getCu
           seenUrls.add(fullUrl);
 
           const isIta = title.toLowerCase().includes('(ita)') || $(el).find('.status .dub').length > 0;
+          const imgEl = $(el).find('img').first();
+          const rawImg = imgEl.attr('src') || imgEl.attr('data-src') || '';
+          const image = rawImg ? (rawImg.startsWith('http') ? rawImg : `${this.baseUrl}${rawImg}`) : '';
           results.push({
             id: href,
             title,
             url: fullUrl,
+            image,
             audio: isIta ? 'ita' : 'subita',
             language: 'it',
             source: 'animeworld',

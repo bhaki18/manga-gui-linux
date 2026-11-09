@@ -22,3 +22,4 @@ pkg/
 *.syso
 *.zip
 .gh-pages-tmp/
+tmp_for_Agents/

@@ -461,6 +461,8 @@ public class MangaCliService
                     ? aProp.GetString() ?? "" : "";
                 var author = elem.TryGetProperty("author", out var auProp) && auProp.ValueKind == JsonValueKind.String
                     ? auProp.GetString() ?? "" : "";
+                var image = elem.TryGetProperty("image", out var imgProp) && imgProp.ValueKind == JsonValueKind.String
+                    ? imgProp.GetString() : null;
 
                 string genres = "";
                 if (elem.TryGetProperty("genres", out var gProp))
@@ -476,6 +478,7 @@ public class MangaCliService
                     Id = id ?? title,
                     Title = title,
                     Url = url,
+                    Image = !string.IsNullOrWhiteSpace(image) ? image : null,
                     Type = type,
                     Source = normSource,
                     SourceName = displaySourceName,
@@ -1327,7 +1330,7 @@ public class MangaCliService
                 {
                     try
                     {
-                        var cover = await CoverService.GetCoverAsync(item.Title, type);
+                        var cover = await CoverService.GetCoverAsync(item.Title, !string.IsNullOrWhiteSpace(item.Type) ? item.Type : type);
                         if (!string.IsNullOrWhiteSpace(cover))
                         {
                             Avalonia.Threading.Dispatcher.UIThread.Post(() =>

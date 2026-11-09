@@ -132,26 +132,34 @@ class OnePiecePowerProvider extends BaseProvider {
 
     const popular = [];
     const rest = [];
+    const usedUrls = new Set();
 
-    for (const item of filtered) {
-      const t = item.title.toLowerCase();
-      const alt = (item.altTitle || '').toLowerCase();
-      const isPop = POPULAR_MANGA_KEYWORDS.some(k => t === k || t.startsWith(k + ' ') || t.includes(k) || alt.includes(k));
-      if (isPop) {
-        popular.push(item);
-      } else {
-        rest.push(item);
+    // First, pick up to 2 best matches per popular keyword (exact or shortest title starting with keyword)
+    for (const kw of POPULAR_MANGA_KEYWORDS) {
+      const kwMatches = filtered.filter(m => {
+        if (usedUrls.has(m.url)) return false;
+        const t = m.title.toLowerCase();
+        const alt = (m.altTitle || '').toLowerCase();
+        if (t === kw) return true;
+        if (kw === 'one piece') {
+          return t === 'one piece' || t === 'one piece (english edition)' || t === 'one piece colored edition';
+        }
+        return t === kw || t.startsWith(kw + ' ') || t.startsWith(kw + ':') || t.startsWith(kw + ' -') || alt === kw;
+      });
+
+      kwMatches.sort((a, b) => a.title.length - b.title.length);
+      const maxPerKeyword = kw === 'one piece' ? 2 : 1;
+      for (const m of kwMatches.slice(0, maxPerKeyword)) {
+        usedUrls.add(m.url);
+        popular.push(m);
       }
     }
 
-    // Sort popular by keyword order
-    popular.sort((a, b) => {
-      const ta = a.title.toLowerCase();
-      const tb = b.title.toLowerCase();
-      const ia = POPULAR_MANGA_KEYWORDS.findIndex(k => ta === k || ta.includes(k));
-      const ib = POPULAR_MANGA_KEYWORDS.findIndex(k => tb === k || tb.includes(k));
-      return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
-    });
+    for (const item of filtered) {
+      if (!usedUrls.has(item.url)) {
+        rest.push(item);
+      }
+    }
 
     return [...popular, ...rest].slice(0, 100);
   }

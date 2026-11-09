@@ -42,11 +42,13 @@ function createAnimeUnityProvider({ BaseAnimeProvider, cheerio, fetchHtml, fetch
       const genres = Array.isArray(record.genres)
         ? record.genres.map(g => g && g.name).filter(Boolean).join(', ')
         : '';
+      const image = record.imageurl || '';
 
       results.push({
         id: `${record.id}-${slug}`,
         title,
         url: fullUrl,
+        image,
         audio: isIta ? 'ita' : 'subita',
         genres,
         language: 'it',

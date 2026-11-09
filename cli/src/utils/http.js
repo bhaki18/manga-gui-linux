@@ -24,12 +24,14 @@ const DOH_RESOLVER = 'https://1.1.1.1/dns-query';
  */
 function fetchHtml(url, referer = null) {
   return new Promise((resolve, reject) => {
+    const isMangaDex = url && url.includes('mangadex.org');
+    const ua = isMangaDex ? 'manga-cli/2.1' : DEFAULT_USER_AGENT;
     const args = [
       '-s',
       '-g',
       '-L',
       '--doh-url', DOH_RESOLVER,
-      '-A', DEFAULT_USER_AGENT,
+      '-A', ua,
       '-H', 'Accept: text/html,application/xhtml+xml,application/xml,application/json;q=0.9,*/*;q=0.8',
       '-H', 'Accept-Language: it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7',
     ];
