@@ -22,6 +22,8 @@ const CONFIG_DIR = process.env.MANGA_CLI_CONFIG_DIR ||
 
 const PROVIDERS_DIR = path.join(CONFIG_DIR, 'providers');
 
+const { getAllHistory, extractNumber } = require('../utils/history');
+
 class ProviderManager {
   constructor() {
     this.mangaProviders = new Map();
@@ -187,7 +189,8 @@ class ProviderManager {
     if (!rawTitle) return '';
     return String(rawTitle)
       .replace(/\b(?:sub\s*ita|ita\s*doppiato|ita\s*dubbed|ita\/sub\s*ita|sub\/dub|ita|subita|sub|dub|raw|oav|movie|film|tv)\b/gi, '')
-      .replace(/\b(?:english\s*sub|eng\s*sub|english|eng)\b/gi, '')
+      .replace(/\b(?:english\s*sub|eng\s*sub|english\s*edition|english|eng)\b/gi, '')
+      .replace(/\b(?:digital\s+colored\s+comics|full\s+color\s+selection|colored\s+edition|causa\s+copyright\s+oscurato|oscurato\s+causa\s+copyright)\b/gi, '')
       .replace(/[\(\)\[\]\/\-_]/g, ' ')
       .replace(/[^a-zA-Z0-9\s]/g, ' ')
       .replace(/\s+/g, ' ')
@@ -198,7 +201,9 @@ class ProviderManager {
   cleanDisplayTitle(rawTitle) {
     if (!rawTitle) return '';
     return String(rawTitle)
-      .replace(/\s*[\(\[]\s*(?:sub\s*ita|ita\s*doppiato|ita\s*dubbed|ita\/sub\s*ita|sub\/dub|ita|subita|sub|dub|english\s*sub|eng|raw)\s*[\)\]]/gi, '')
+      .replace(/\s*[\(\[]\s*(?:sub\s*ita|ita\s*doppiato|ita\s*dubbed|ita\/sub\s*ita|sub\/dub|ita|subita|sub|dub|english\s*sub|eng|raw|causa\s*copyright[^\)\]]*)\s*[\)\]]/gi, '')
+      .replace(/\s*-\s*Digital\s+Colored\s+Comics.*$/gi, '')
+      .replace(/\s+Full\s+Color\s+Selection\b/gi, '')
       .replace(/\s*-\s*(?:sub\s*ita|ita\s*doppiato|ita\s*dubbed|ita|sub|dub).*$/gi, '')
       .replace(/\s+(?:SUB\s*ITA|ITA\s*DUBBED|ITA\/SUB\s*ITA|SUBITA|ITA)\b/gi, '')
       .trim();
@@ -219,19 +224,21 @@ class ProviderManager {
       result.push(cleaned);
     } else {
       const existing = seen.get(key);
-      const a1 = String(existing.audio || '').toLowerCase().trim();
-      const a2 = String(item.audio || '').toLowerCase().trim();
-      const checkSub = (a) => !a || a === 'both' || a.includes('both') || a.includes('ita/sub') || a.includes('sub/dub') || a === 'sub' || a === 'subita' || a.includes('sub');
-      const checkDub = (a) => !!a && (a === 'both' || a.includes('both') || a.includes('ita/sub') || a.includes('sub/dub') || a === 'dub' || a === 'ita' || a.includes('dub') || a.includes('doppiato') || (a.includes('ita') && !a.includes('sub')));
-      const hasSub = checkSub(a1) || checkSub(a2);
-      const hasDub = checkDub(a1) || checkDub(a2);
+      if ((existing.type || item.type) !== 'manga') {
+        const a1 = String(existing.audio || '').toLowerCase().trim();
+        const a2 = String(item.audio || '').toLowerCase().trim();
+        const checkSub = (a) => !a || a === 'both' || a.includes('both') || a.includes('ita/sub') || a.includes('sub/dub') || a === 'sub' || a === 'subita' || a.includes('sub');
+        const checkDub = (a) => !!a && (a === 'both' || a.includes('both') || a.includes('ita/sub') || a.includes('sub/dub') || a === 'dub' || a === 'ita' || a.includes('dub') || a.includes('doppiato') || (a.includes('ita') && !a.includes('sub')));
+        const hasSub = checkSub(a1) || checkSub(a2);
+        const hasDub = checkDub(a1) || checkDub(a2);
 
-      if (hasSub && hasDub) {
-        existing.audio = 'both';
-      } else if (hasDub) {
-        existing.audio = 'dub';
-      } else if (hasSub) {
-        existing.audio = 'sub';
+        if (hasSub && hasDub) {
+          existing.audio = 'both';
+        } else if (hasDub) {
+          existing.audio = 'dub';
+        } else if (hasSub) {
+          existing.audio = 'sub';
+        }
       }
 
       if (!existing.image && item.image) {
@@ -239,6 +246,12 @@ class ProviderManager {
       }
       if (item.count && (!existing.count || item.count > existing.count)) {
         existing.count = item.count;
+      }
+      if (!existing.lastItem && item.lastItem) {
+        existing.lastItem = item.lastItem;
+      }
+      if ((!existing.watchedNumbers || existing.watchedNumbers.length === 0) && Array.isArray(item.watchedNumbers) && item.watchedNumbers.length > 0) {
+        existing.watchedNumbers = item.watchedNumbers;
       }
     }
   }
@@ -251,6 +264,36 @@ class ProviderManager {
       this.addOrMergeItem(result, seen, item);
     }
     return result;
+  }
+
+  enrichWithHistory(items, type) {
+    if (!Array.isArray(items) || items.length === 0) return items;
+    try {
+      const historyList = getAllHistory().filter(h => h.type === type);
+      if (historyList.length === 0) return items;
+
+      const byUrl = new Map();
+      const byNormTitle = new Map();
+      for (const h of historyList) {
+        if (h.url) byUrl.set(String(h.url).toLowerCase().trim(), h);
+        const norm = this.normalizeTitleForDedup(h.title);
+        if (norm) byNormTitle.set(norm, h);
+      }
+
+      for (const item of items) {
+        const u = item.url ? String(item.url).toLowerCase().trim() : '';
+        const norm = this.normalizeTitleForDedup(item.title);
+        const match = (u && byUrl.get(u)) || (norm && byNormTitle.get(norm));
+        if (match && match.count > 0) {
+          item.count = match.count;
+          item.lastItem = match.lastItem;
+          if (Array.isArray(match.watchedNumbers)) {
+            item.watchedNumbers = match.watchedNumbers;
+          }
+        }
+      }
+    } catch {}
+    return items;
   }
 
   interleaveArrays(arrays) {
@@ -401,7 +444,7 @@ class ProviderManager {
         arrays.push(res.value);
       }
     }
-    return this.interleaveArrays(arrays);
+    return this.enrichWithHistory(this.interleaveArrays(arrays), 'manga');
   }
 
   async searchAnime(query, lang = null, sourceFilter = null, filters = {}) {
@@ -446,7 +489,7 @@ class ProviderManager {
         arrays.push(res.value);
       }
     }
-    return this.interleaveArrays(arrays);
+    return this.enrichWithHistory(this.interleaveArrays(arrays), 'anime');
   }
 
   /**
@@ -491,7 +534,7 @@ class ProviderManager {
         arrays.push(res.value);
       }
     }
-    return this.interleaveArrays(arrays);
+    return this.enrichWithHistory(this.interleaveArrays(arrays), 'manga');
   }
 
   /**
@@ -537,7 +580,7 @@ class ProviderManager {
         arrays.push(res.value);
       }
     }
-    return this.interleaveArrays(arrays);
+    return this.enrichWithHistory(this.interleaveArrays(arrays), 'anime');
   }
 
   /**

@@ -405,7 +405,9 @@ function getAllHistory() {
         const nB = extractNumber(b.id) || extractNumber(b.title) || 0;
         return nA - nB;
       });
+      const watchedNumbers = [...new Set(episodes.map(e => extractNumber(e.id) || extractNumber(e.title)).filter(n => n !== null && !isNaN(n)))].sort((a, b) => a - b);
       const lastEp = episodes[episodes.length - 1];
+      const lastNum = watchedNumbers.length > 0 ? watchedNumbers[watchedNumbers.length - 1] : null;
       list.push({
         type: 'anime',
         key: cleanKey,
@@ -415,9 +417,10 @@ function getAllHistory() {
         source: val.source || 'onepiecepower',
         language: val.language || 'it',
         audio: val.audio || 'both',
-        count: episodes.length,
+        count: watchedNumbers.length > 0 ? watchedNumbers.length : episodes.length,
+        watchedNumbers,
         lastAccessedAt: val.lastWatchedAt || val.lastReadAt || null,
-        lastItem: lastEp ? (lastEp.title || `Episode ${lastEp.id}`) : null
+        lastItem: lastNum !== null ? `Ep. ${lastNum}` : (lastEp ? (lastEp.title || `Ep. ${lastEp.id}`) : null)
       });
     } else {
       const chapters = Array.isArray(val.readChapters) ? [...val.readChapters] : [];
@@ -426,7 +429,9 @@ function getAllHistory() {
         const nB = extractNumber(b.id) || extractNumber(b.title) || 0;
         return nA - nB;
       });
+      const watchedNumbers = [...new Set(chapters.map(c => extractNumber(c.id) || extractNumber(c.title)).filter(n => n !== null && !isNaN(n)))].sort((a, b) => a - b);
       const lastCh = chapters[chapters.length - 1];
+      const lastNum = watchedNumbers.length > 0 ? watchedNumbers[watchedNumbers.length - 1] : null;
       list.push({
         type: 'manga',
         key: cleanKey,
@@ -435,9 +440,10 @@ function getAllHistory() {
         url: val.url || cleanKey,
         source: val.source || 'onepiecepower',
         language: val.language || 'it',
-        count: chapters.length,
+        count: watchedNumbers.length > 0 ? watchedNumbers.length : chapters.length,
+        watchedNumbers,
         lastAccessedAt: val.lastReadAt || null,
-        lastItem: lastCh ? (lastCh.title || `Chapter ${lastCh.id}`) : null
+        lastItem: lastNum !== null ? `Ch. ${lastNum}` : (lastCh ? (lastCh.title || `Ch. ${lastCh.id}`) : null)
       });
     }
   }

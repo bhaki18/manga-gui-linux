@@ -13,7 +13,7 @@ namespace MangaGui.Services;
 
 public class CoverService
 {
-    private const string CacheSchemaVersion = "2";
+    private const string CacheSchemaVersion = "3";
     private const string CacheVersionKey = "__cache_version__";
 
     private static readonly HttpClient _httpClient = new()
@@ -230,6 +230,16 @@ public class CoverService
 
                             if (string.IsNullOrWhiteSpace(itemPosterUrl)) continue;
 
+                            // Skip 18+ adult / hentai entries in Kitsu
+                            if (attrs.TryGetProperty("ageRating", out var ageProp) && ageProp.ValueKind == JsonValueKind.String)
+                            {
+                                var rating = ageProp.GetString();
+                                if (string.Equals(rating, "R18", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    continue;
+                                }
+                            }
+
                             var canonical = attrs.TryGetProperty("canonicalTitle", out var ct) ? ct.GetString() : null;
                             bool matched = IsTitleMatch(cleanTitle, canonical);
 
@@ -276,7 +286,7 @@ public class CoverService
         try
         {
             var mediaType = type.ToLower() == "manga" ? "MANGA" : "ANIME";
-            var query = "query ($search: String, $type: MediaType) { Page(perPage: 6) { media(search: $search, type: $type) { title { romaji english native } synonyms coverImage { extraLarge large medium } } } }";
+            var query = "query ($search: String, $type: MediaType) { Page(perPage: 10) { media(search: $search, type: $type, isAdult: false, sort: [POPULARITY_DESC]) { isAdult popularity title { romaji english native } synonyms coverImage { extraLarge large medium } } } }";
             var payload = new
             {
                 query,
@@ -290,12 +300,20 @@ public class CoverService
                 var body = await res.Content.ReadAsStringAsync();
                 using var doc = JsonDocument.Parse(body);
                 if (doc.RootElement.TryGetProperty("data", out var data) &&
+                    data.ValueKind == JsonValueKind.Object &&
                     data.TryGetProperty("Page", out var page) &&
+                    page.ValueKind == JsonValueKind.Object &&
                     page.TryGetProperty("media", out var mediaArr) &&
                     mediaArr.ValueKind == JsonValueKind.Array)
                 {
                     foreach (var media in mediaArr.EnumerateArray())
                     {
+                        if (media.TryGetProperty("isAdult", out var adultProp) &&
+                            adultProp.ValueKind == JsonValueKind.True)
+                        {
+                            continue;
+                        }
+
                         var candidateTitles = new List<string?>();
                         if (media.TryGetProperty("title", out var tObj) && tObj.ValueKind == JsonValueKind.Object)
                         {
@@ -414,6 +432,8 @@ public class CoverService
 
         // Strip common manga edition suffixes
         s = Regex.Replace(s, @"\b(digital\s+colored\s+comics|full\s+color\s+selection|colored\s+edition|official\s+colored|fan\s+colored|english\s+edition|causa\s+copyright\s+oscurato|oscurato\s+causa\s+copyright)\b", " ", RegexOptions.IgnoreCase);
+        s = Regex.Replace(s, @"\(\s*causa\s+copyright[^\)]*\)", " ", RegexOptions.IgnoreCase);
+        s = Regex.Replace(s, @"-\s*digital\s+colored\s+comics.*$", " ", RegexOptions.IgnoreCase);
 
         // Strip standalone keywords
         s = Regex.Replace(s, @"\b(ita|sub|dub|subita|subeng|eng|doppiato|special|specials|movie|film|ova|ona|oav|raw)\b", " ", RegexOptions.IgnoreCase);

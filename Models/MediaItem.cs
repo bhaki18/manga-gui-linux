@@ -131,14 +131,16 @@ public partial class MediaItem : ObservableObject
             {
                 var label = Type.ToLower() == "manga" ? "Read" : "Watched";
                 var unit = Type.ToLower() == "manga" ? "ch." : "ep.";
-                return $"{label}: {WatchedSummary} ({Count} {unit})";
+                var effCount = Count > 0 ? Count : (WatchedNumbers != null && WatchedNumbers.Count > 0 ? WatchedNumbers.Count : 1);
+                return $"{label}: {WatchedSummary} ({effCount} {unit})";
             }
 
             if (!string.IsNullOrWhiteSpace(LastItem))
             {
                 var label = Type.ToLower() == "manga" ? "Read" : "Watched";
                 var unit = Type.ToLower() == "manga" ? "ch." : "ep.";
-                return $"{label}: {LastItem} ({Count} {unit})";
+                var effCount = Count > 0 ? Count : (WatchedNumbers != null && WatchedNumbers.Count > 0 ? WatchedNumbers.Count : 1);
+                return $"{label}: {LastItem} ({effCount} {unit})";
             }
 
             var langBadge = !string.IsNullOrWhiteSpace(Language) ? Language.ToUpperInvariant() : "IT";

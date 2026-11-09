@@ -344,7 +344,8 @@ public class MangaCliService
     {
         if (string.IsNullOrWhiteSpace(rawTitle)) return "";
         var t = Regex.Replace(rawTitle, @"\b(?:sub\s*ita|ita\s*doppiato|ita\s*dubbed|ita/sub\s*ita|sub/dub|ita|subita|sub|dub|raw|oav|movie|film|tv)\b", "", RegexOptions.IgnoreCase);
-        t = Regex.Replace(t, @"\b(?:english\s*sub|eng\s*sub|english|eng)\b", "", RegexOptions.IgnoreCase);
+        t = Regex.Replace(t, @"\b(?:english\s*sub|eng\s*sub|english\s*edition|english|eng)\b", "", RegexOptions.IgnoreCase);
+        t = Regex.Replace(t, @"\b(?:digital\s+colored\s+comics|full\s+color\s+selection|colored\s+edition|causa\s+copyright\s+oscurato|oscurato\s+causa\s+copyright)\b", "", RegexOptions.IgnoreCase);
         t = Regex.Replace(t, @"[()\[\]/\-_]", " ");
         t = Regex.Replace(t, @"[^a-zA-Z0-9\s]", " ");
         t = Regex.Replace(t, @"\s+", " ").Trim().ToLowerInvariant();
@@ -354,7 +355,9 @@ public class MangaCliService
     public static string CleanDisplayTitle(string? rawTitle)
     {
         if (string.IsNullOrWhiteSpace(rawTitle)) return "";
-        var t = Regex.Replace(rawTitle, @"\s*[(\[]\s*(?:sub\s*ita|ita\s*doppiato|ita\s*dubbed|ita/sub\s*ita|sub/dub|ita|subita|sub|dub|english\s*sub|eng|raw)\s*[)\]]", "", RegexOptions.IgnoreCase);
+        var t = Regex.Replace(rawTitle, @"\s*[(\[]\s*(?:sub\s*ita|ita\s*doppiato|ita\s*dubbed|ita/sub\s*ita|sub/dub|ita|subita|sub|dub|english\s*sub|eng|raw|causa\s*copyright[^\)\]]*)\s*[)\]]", "", RegexOptions.IgnoreCase);
+        t = Regex.Replace(t, @"\s*-\s*Digital\s+Colored\s+Comics.*$", "", RegexOptions.IgnoreCase);
+        t = Regex.Replace(t, @"\s+Full\s+Color\s+Selection\b", "", RegexOptions.IgnoreCase);
         t = Regex.Replace(t, @"\s*-\s*(?:sub\s*ita|ita\s*doppiato|ita\s*dubbed|ita|sub|dub).*$", "", RegexOptions.IgnoreCase);
         t = Regex.Replace(t, @"\s+(?:SUB\s*ITA|ITA\s*DUBBED|ITA/SUB\s*ITA|SUBITA|ITA)\b", "", RegexOptions.IgnoreCase);
         return t.Trim();
@@ -384,26 +387,29 @@ public class MangaCliService
             }
             else
             {
-                // Merge audio
-                var a1 = (existing.Audio ?? "").ToLowerInvariant().Trim();
-                var a2 = (item.Audio ?? "").ToLowerInvariant().Trim();
-                bool CheckSub(string a) => string.IsNullOrEmpty(a) || a == "both" || a.Contains("both") || a.Contains("ita/sub") || a.Contains("sub/dub") || a == "sub" || a == "subita" || a.Contains("sub");
-                bool CheckDub(string a) => !string.IsNullOrEmpty(a) && (a == "both" || a.Contains("both") || a.Contains("ita/sub") || a.Contains("sub/dub") || a == "dub" || a == "ita" || a.Contains("dub") || a.Contains("doppiato") || (a.Contains("ita") && !a.Contains("sub")));
+                if (!string.Equals(existing.Type, "manga", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Merge audio for anime
+                    var a1 = (existing.Audio ?? "").ToLowerInvariant().Trim();
+                    var a2 = (item.Audio ?? "").ToLowerInvariant().Trim();
+                    bool CheckSub(string a) => string.IsNullOrEmpty(a) || a == "both" || a.Contains("both") || a.Contains("ita/sub") || a.Contains("sub/dub") || a == "sub" || a == "subita" || a.Contains("sub");
+                    bool CheckDub(string a) => !string.IsNullOrEmpty(a) && (a == "both" || a.Contains("both") || a.Contains("ita/sub") || a.Contains("sub/dub") || a == "dub" || a == "ita" || a.Contains("dub") || a.Contains("doppiato") || (a.Contains("ita") && !a.Contains("sub")));
 
-                var hasSub = CheckSub(a1) || CheckSub(a2);
-                var hasDub = CheckDub(a1) || CheckDub(a2);
+                    var hasSub = CheckSub(a1) || CheckSub(a2);
+                    var hasDub = CheckDub(a1) || CheckDub(a2);
 
-                if (hasSub && hasDub)
-                {
-                    existing.Audio = "both";
-                }
-                else if (hasDub)
-                {
-                    existing.Audio = "dub";
-                }
-                else if (hasSub)
-                {
-                    existing.Audio = "sub";
+                    if (hasSub && hasDub)
+                    {
+                        existing.Audio = "both";
+                    }
+                    else if (hasDub)
+                    {
+                        existing.Audio = "dub";
+                    }
+                    else if (hasSub)
+                    {
+                        existing.Audio = "sub";
+                    }
                 }
 
                 if (string.IsNullOrWhiteSpace(existing.Image) && !string.IsNullOrWhiteSpace(item.Image))
@@ -414,6 +420,15 @@ public class MangaCliService
                 if (item.Count > existing.Count)
                 {
                     existing.Count = item.Count;
+                }
+                if (string.IsNullOrWhiteSpace(existing.LastItem) && !string.IsNullOrWhiteSpace(item.LastItem))
+                {
+                    existing.LastItem = item.LastItem;
+                }
+                if ((existing.WatchedNumbers == null || existing.WatchedNumbers.Count == 0) &&
+                    item.WatchedNumbers != null && item.WatchedNumbers.Count > 0)
+                {
+                    existing.WatchedNumbers = item.WatchedNumbers;
                 }
             }
         }
@@ -463,6 +478,24 @@ public class MangaCliService
                     ? auProp.GetString() ?? "" : "";
                 var image = elem.TryGetProperty("image", out var imgProp) && imgProp.ValueKind == JsonValueKind.String
                     ? imgProp.GetString() : null;
+                var lastItem = elem.TryGetProperty("lastItem", out var liProp) && liProp.ValueKind == JsonValueKind.String
+                    ? liProp.GetString() : null;
+                var watchedSummary = elem.TryGetProperty("watchedSummary", out var wsProp) && wsProp.ValueKind == JsonValueKind.String
+                    ? wsProp.GetString() : null;
+                int count = elem.TryGetProperty("count", out var cProp) && cProp.ValueKind == JsonValueKind.Number && cProp.TryGetInt32(out var cVal)
+                    ? cVal : 0;
+
+                var watchedNumbers = new List<int>();
+                if (elem.TryGetProperty("watchedNumbers", out var wnProp) && wnProp.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var wn in wnProp.EnumerateArray())
+                    {
+                        if (wn.ValueKind == JsonValueKind.Number && wn.TryGetInt32(out var wnVal))
+                        {
+                            watchedNumbers.Add(wnVal);
+                        }
+                    }
+                }
 
                 string genres = "";
                 if (elem.TryGetProperty("genres", out var gProp))
@@ -473,7 +506,7 @@ public class MangaCliService
                         genres = string.Join(", ", gProp.EnumerateArray().Where(x => x.ValueKind == JsonValueKind.String).Select(x => x.GetString()));
                 }
 
-                list.Add(new MediaItem
+                var mediaItem = new MediaItem
                 {
                     Id = id ?? title,
                     Title = title,
@@ -483,10 +516,20 @@ public class MangaCliService
                     Source = normSource,
                     SourceName = displaySourceName,
                     Language = lang,
-                    Audio = !string.IsNullOrWhiteSpace(audio) ? audio : lang.ToUpperInvariant(),
+                    Audio = !string.IsNullOrWhiteSpace(audio) ? audio : (type == "manga" ? "" : lang.ToUpperInvariant()),
                     Author = author,
-                    Genres = genres
-                });
+                    Genres = genres,
+                    Count = count,
+                    LastItem = lastItem,
+                    WatchedSummary = watchedSummary,
+                    WatchedNumbers = watchedNumbers
+                };
+                if (watchedNumbers.Count > 0)
+                {
+                    mediaItem.Count = watchedNumbers.Count;
+                    mediaItem.UpdateWatchedSummary();
+                }
+                list.Add(mediaItem);
             }
         }
         catch
@@ -1093,6 +1136,7 @@ public class MangaCliService
                     {
                         item.WatchedNumbers.Add(episode);
                         item.WatchedNumbers.Sort();
+                        item.Count = item.WatchedNumbers.Count;
                         item.UpdateWatchedSummary();
                     }
 
@@ -1194,6 +1238,7 @@ public class MangaCliService
                     {
                         item.WatchedNumbers.Add(chapter);
                         item.WatchedNumbers.Sort();
+                        item.Count = item.WatchedNumbers.Count;
                         item.UpdateWatchedSummary();
                     }
 
