@@ -196,9 +196,8 @@ fi
 if [ "$PUB_DEB" = true ] && [ -n "$LATEST_DEB" ] && [ -f "$LATEST_DEB" ]; then
     echo "🔄 [Debian] Aggiornamento pacchetto .deb in deb/..."
     mkdir -p "$TMP_DIR/deb"
-    rm -f "$TMP_DIR"/deb/*.deb
+    rm -f "$TMP_DIR"/deb/*.deb "$TMP_DIR"/*.deb
     cp -f "$LATEST_DEB" "$TMP_DIR/deb/"
-    cp -f "$LATEST_DEB" "$TMP_DIR/deb/manga-gui_latest_amd64.deb"
     STAGED_PATHS+=("deb/")
 fi
 
@@ -206,23 +205,31 @@ fi
 if [ "$PUB_TAR" = true ] && [ -n "$LATEST_TAR" ] && [ -f "$LATEST_TAR" ]; then
     echo "🔄 [Tarball] Aggiornamento archivio universale in tar/..."
     mkdir -p "$TMP_DIR/tar"
-    rm -f "$TMP_DIR"/tar/*.tar.gz
-    cp -f "$LATEST_TAR" "$TMP_DIR/tar/"
-    cp -f "$LATEST_TAR" "$TMP_DIR/manga-gui-linux-x64.tar.gz"
-    STAGED_PATHS+=("tar/" "manga-gui-linux-x64.tar.gz")
+    rm -f "$TMP_DIR"/tar/*.tar.gz "$TMP_DIR"/manga-gui*.tar.gz
+    cp -f "$LATEST_TAR" "$TMP_DIR/tar/manga-gui-linux-x64.tar.gz"
+    STAGED_PATHS+=("tar/")
 fi
 
 # 8. Sezione Windows ZIP (ISOLATA NELLA CARTELLA windows/)
 if [ "$PUB_WIN" = true ] && [ -n "$LATEST_WIN" ] && [ -f "$LATEST_WIN" ]; then
     echo "🔄 [Windows] Aggiornamento archivio Windows in windows/..."
     mkdir -p "$TMP_DIR/windows"
-    rm -f "$TMP_DIR"/windows/*.zip
+    rm -f "$TMP_DIR"/windows/*.zip "$TMP_DIR"/*.zip
     cp -f "$LATEST_WIN" "$TMP_DIR/windows/manga-gui-windows.zip"
-    cp -f "$LATEST_WIN" "$TMP_DIR/windows/manga-gui-win-x64.zip"
     STAGED_PATHS+=("windows/")
 fi
 
-# 9. Aggiorna linux_version.json nella radice di gh-pages
+# 9. Disabilita elaborazione Jekyll su GitHub Pages (.nojekyll) e rimuovi duplicati obsoleti nella root
+touch "$TMP_DIR/.nojekyll"
+STAGED_PATHS+=(".nojekyll")
+for stale_root_file in "$TMP_DIR"/manga-gui*.tar.gz "$TMP_DIR"/manga-gui*.deb "$TMP_DIR"/manga-gui*.zip; do
+    if [ -e "$stale_root_file" ]; then
+        rm -f "$stale_root_file"
+        STAGED_PATHS+=("$(basename "$stale_root_file")")
+    fi
+done
+
+# 10. Aggiorna linux_version.json nella radice di gh-pages
 if [ -f "$SCRIPT_DIR/linux_version.json" ]; then
     cp -f "$SCRIPT_DIR/linux_version.json" "$TMP_DIR/linux_version.json"
     STAGED_PATHS+=("linux_version.json")

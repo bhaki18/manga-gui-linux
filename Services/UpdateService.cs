@@ -265,10 +265,10 @@ public class UpdateService
                 : $"https://raw.githubusercontent.com/bhaki18/manga-cli/gh-pages/x86_64/manga-gui-bin-{bestRemoteVersion}-x86_64.pkg.tar.zst";
             result.DebPackageUrl = !string.IsNullOrWhiteSpace(bestDebPkgUrl)
                 ? bestDebPkgUrl
-                : $"https://raw.githubusercontent.com/bhaki18/manga-cli/gh-pages/manga-gui_{bestRemoteVersion}_amd64.deb";
+                : $"https://raw.githubusercontent.com/bhaki18/manga-cli/gh-pages/deb/manga-gui_{bestRemoteVersion}_amd64.deb";
             result.LinuxTarballUrl = !string.IsNullOrWhiteSpace(bestTarballUrl)
                 ? bestTarballUrl
-                : "https://raw.githubusercontent.com/bhaki18/manga-cli/gh-pages/manga-gui-linux-x64.tar.gz";
+                : "https://raw.githubusercontent.com/bhaki18/manga-cli/gh-pages/tar/manga-gui-linux-x64.tar.gz";
             result.HasUpdate = IsRemoteNewer(installed, bestRemoteVersion);
         }
         else
@@ -304,10 +304,10 @@ public class UpdateService
                 : $"https://raw.githubusercontent.com/bhaki18/manga-cli/gh-pages/x86_64/manga-gui-bin-{updateInfo.RemoteVersion}-x86_64.pkg.tar.zst";
             var debPkgUrl = !string.IsNullOrWhiteSpace(updateInfo.DebPackageUrl)
                 ? updateInfo.DebPackageUrl
-                : $"https://raw.githubusercontent.com/bhaki18/manga-cli/gh-pages/manga-gui_{updateInfo.RemoteVersion}_amd64.deb";
+                : $"https://raw.githubusercontent.com/bhaki18/manga-cli/gh-pages/deb/manga-gui_{updateInfo.RemoteVersion}_amd64.deb";
             var tarPkgUrl = !string.IsNullOrWhiteSpace(updateInfo.LinuxTarballUrl)
                 ? updateInfo.LinuxTarballUrl
-                : "https://raw.githubusercontent.com/bhaki18/manga-cli/gh-pages/manga-gui-linux-x64.tar.gz";
+                : "https://raw.githubusercontent.com/bhaki18/manga-cli/gh-pages/tar/manga-gui-linux-x64.tar.gz";
 
             var sb = new StringBuilder();
             sb.AppendLine("#!/usr/bin/env bash");
